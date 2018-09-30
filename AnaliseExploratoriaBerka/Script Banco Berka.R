@@ -2,21 +2,21 @@
 
 # Obs: Banco de dados Trans é pesado.
 
-account <- read.csv("C:/Users/cesar/Desktop/Banco Berka/account.asc", sep=";")
+account <- read.csv("./dados/account.asc", sep=";")
 View(account)
-card <- read.csv("C:/Users/cesar/Desktop/Banco Berka/card.asc", sep=";")
+card <- read.csv("./dados/card.asc", sep=";")
 View(card)
-client <- read.csv("C:/Users/cesar/Desktop/Banco Berka/client.asc", sep=";")
+client <- read.csv("./dados/client.asc", sep=";")
 View(client)
-disp <- read.csv("C:/Users/cesar/Desktop/Banco Berka/disp.asc", sep=";")
+disp <- read.csv("./dados/disp.asc", sep=";")
 View(disp)
-district <- read.csv("C:/Users/cesar/Desktop/Banco Berka/district.asc", header=FALSE, sep=";")
+district <- read.csv("./dados/district.asc", header=FALSE, sep=";")
 View(district)
-loan <- read.csv("C:/Users/cesar/Desktop/Banco Berka/loan.asc", sep=";")
+loan <- read.csv("./dados/loan.asc", sep=";")
 View(loan)
-order <- read.csv("C:/Users/cesar/Desktop/Banco Berka/order.asc", sep=";")
+order <- read.csv("./dados/order.asc", sep=";")
 View(order)
-trans <- read.csv("C:/Users/cesar/Desktop/Banco Berka/trans.asc", sep=";")
+trans <- read.csv("./dados/trans.asc", sep=";")
 View(trans)
 
 # Pacotes:
@@ -51,6 +51,8 @@ card$issued <- as.Date(paste(card$issued), "%y%m%d")
 
 disp$type <- as.factor(disp$type)
 
+View(card)
+
 
 #Gráfico de quatidades:
 p1 <- ggplot(disp, aes(x = type))
@@ -73,6 +75,7 @@ account$tipoextratos <- gsub("POPLATEK TYDNE", "semanal", account$tipoextratos)
 account$tipoextratos <- gsub("POPLATEK PO OBRATU", "acadatransacao", account$tipoextratos)
 account$tipoextratos <- as.factor(account$tipoextratos)
 
+View(account)
 #client:
   
 #birth: Valores são YYMMDD e YYMM+50DD, onde +50DD representa o sexo femínino. Formatar data e separar o campo de gênero, M e F.
@@ -82,7 +85,9 @@ client <- client %>%
   mutate(sex = ifelse(mesajustado > 50, "F", "M")) %>%
   mutate(birth_number = ifelse(sex=="F", birth_number - 5000, birth_number))
 client$birth_number <- paste0("19", client$birth_number)
+View(client)
 client$birth_number <- as.Date(client$birth_number, "%Y%m%d")
+View(client)
 
 
 
