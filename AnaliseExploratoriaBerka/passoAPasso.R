@@ -17,8 +17,12 @@ View(rawdata)
 summary(rawdata)
 numdata <- rawdata[,c(3,6:10)]
 
+numdata$unemp_r
+?is.na
 #Tratamento de dados - eliminação de NAS
 numdata[is.na(numdata[,5]),5] <- 1
+numdata[is.na(numdata[,5]),5]
+numdata[is.na(numdata$unemp_r),5]
 View(numdata)
 
 #Geração de dados padronizados

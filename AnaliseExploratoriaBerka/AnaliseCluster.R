@@ -1,3 +1,5 @@
+
+#Carregar os dados
 read.csv2("./dados/account.asc", stringsAsFactors = FALSE) -> account
 read.csv2("./dados/client.asc", stringsAsFactors = FALSE) -> client
 read.csv2("./dados/card.asc", stringsAsFactors = FALSE) -> card
@@ -35,6 +37,7 @@ client <- client %>%
   mutate(birth_number = as.Date(birth_number, "%Y%m%d")) %>%
   mutate(age = year(currentdate) - year(birth_number)) %>%
   select(client_id, age, birth_number, district_id, sex)
+
 ?select
 
 #client$birth_number <- paste0("19", client$birth_number)
@@ -57,11 +60,16 @@ disp$type <- as.factor(disp$type)
 View(disp)
 
 
+#Converter campos para numérico
 district$A12 = as.numeric(district$A12)
 district$A13 = as.numeric(district$A13)
+
+#Limpeza de NA
+district[is.na(district$A12),12] <- 1
+
 str(district)
 mutate(district, avg_sal = A11) %>%
-  mutate(unemp_r = ifelse(A13 == 0 | A12 == 0, 1, (A13+A12)/2)) -> district_dados
+  mutate(unemp_r = ifelse(A13 == 0 | A12 == 0, 1, A13/A12)) -> district_dados
 View(district_dados)
 
 View(district)

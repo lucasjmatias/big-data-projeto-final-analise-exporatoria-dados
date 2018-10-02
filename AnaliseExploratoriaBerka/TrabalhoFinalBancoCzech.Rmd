@@ -1,0 +1,31 @@
+---
+title: "Análise de dados - Banco Czech"
+output:
+    pdf_document:
+      toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+\newpage
+\tableofcontents
+\newpage
+
+# Objetivo
+O objetivo do nosso trabalho é identificar quais fatores que podem impactar no atraso e não pagamento das dívidas. 
+
+#Carregar os dados
+
+##Objetivo 2
+
+
+```{r}
+read.csv2("./dados/account.asc", stringsAsFactors = FALSE) -> account
+read.csv2("./dados/client.asc", stringsAsFactors = FALSE) -> client
+read.csv2("./dados/card.asc", stringsAsFactors = FALSE) -> card
+read.csv2("./dados/disp.asc", stringsAsFactors = FALSE) -> disp
+read.csv2("./dados/district.asc", stringsAsFactors = FALSE) -> district
+read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
+
+```
