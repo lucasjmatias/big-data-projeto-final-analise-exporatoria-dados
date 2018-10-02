@@ -13,12 +13,18 @@ knitr::opts_chunk$set(echo = TRUE)
 \newpage
 
 # Objetivo
-O objetivo do nosso trabalho é identificar quais fatores que podem impactar no atraso e não pagamento das dívidas. 
+O objetivo do nosso trabalho é identificar quais fatores que podem impactar no atraso e não pagamento das dívidas.
+
+```{r include=FALSE}
+
+#Carrega as bibliotecas
+library(tidyverse)
+library(lubridate)
+
+```
 
 #Carregar os dados
-
-##Objetivo 2
-
+Utilizamos a função read.csv2 que nos permite carregar os dados disponíveis em texto, no formato CSV.
 
 ```{r}
 read.csv2("./dados/account.asc", stringsAsFactors = FALSE) -> account
@@ -29,3 +35,31 @@ read.csv2("./dados/district.asc", stringsAsFactors = FALSE) -> district
 read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
 
 ```
+
+#Tratamento dos dados
+
+##Cliente
+O tratamento inicial da relação cliente envolve a separação do campo data de nascimento e gênero, que será tratado por M e F. E a transformação do campo birth_number em uma data válida para o R. Para isso transformamos o birth_number em um campo númerico, obtemos 4 dígitos da 3ª à 4ª posição, sendo este valor superior a 50 consideramos como feminino, pois o mês de nascimento das mulheres está com uma soma de 50 unidades. Subtraímos 5000 do mês das mulheres, pois como um único campo numérico, implica em diminuir 50 do campo mensal. Após isso concatenamos o número 19 ao começo do birth_number, no intuíto de deixar melhor preparado para a formatação da data, que ocorre logo em seguida. Logo após, calculamos a idade e selecionamos apenas os campos que nos serão úteis para o nosso estudo.
+samos a data de referência como 01/01/1998, devido a referência dos dados, para calcular a idade dos clientes.
+```{r}
+currentdate <- as.Date("1998/01/01", format="%Y/%m/%d")
+client <- client %>%
+  mutate(mesajustado = as.numeric(stringr::str_sub(birth_number,3,4))) %>%
+  mutate(gender = ifelse(mesajustado > 50, "F", "M")) %>%
+  mutate(birth_number = ifelse(gender=="F", birth_number - 5000, birth_number)) %>%
+  mutate(birth_number = paste0("19", birth_number)) %>%
+  mutate(birth_number = as.Date(birth_number, "%Y%m%d")) %>%
+  mutate(age = year(currentdate) - year(birth_number)) %>%
+  select(client_id, age, district_id, gender)
+
+```
+
+##
+
+
+
+
+
+
+
+
