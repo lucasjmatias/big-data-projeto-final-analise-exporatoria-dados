@@ -77,7 +77,15 @@ district[is.na(district$unemp_95),12] <- 1
   select(district_id, district_name, avg_sal, unemp_95, unemp_96) -> district
 ```
 
-##
+##Cartão
+O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo. Preparamos então o tipo do cartão como categórica.
+
+```{r}
+card <- card %>%
+        select(card_id, disp_id, type) %>%
+        mutate(type = as.factor(type))
+```
+
 
 
 
