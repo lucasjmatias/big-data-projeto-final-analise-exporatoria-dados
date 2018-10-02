@@ -1,0 +1,17 @@
+loan$date <- paste0("19", loan$date)
+loan$date <- as.Date(loan$date, "%Y%m%d")
+
+
+
+loan <- mutate(loan, status = ifelse(loan$status == "A", "A - Finalizado",
+ifelse(loan$status == "B", "B - Finalizado, nao pago",
+ifelse(loan$status == "C", "C - vigente", 
+ifelse(loan$status == "D", "D - Em debito", "Nao Informado")))))
+
+loan <-mutate(loan, status_loan_dummy = ifelse(loan$status == "A - Finalizado e OK", 1,
+ifelse(loan$status == "C - Em andamento e OK", 1,
+ifelse(loan$status == "B - Finalizado, emprestimo nao pago", 0,
+felse(loan$status == "D - Em andamento, em debito", 0, "Nao Informado")))))
+
+#Deu problema:
+loan <-mutate(loan, status_loan_dummy = as.double(loan$status_loan_dummy))
