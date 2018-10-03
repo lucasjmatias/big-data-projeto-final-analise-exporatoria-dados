@@ -10,5 +10,6 @@ unique(disp$type)
 disp <- disp %>%
         dplyr::filter(type == "OWNER") %>%
         select(disp_id, client_id, account_id)
-        
+
+View(disp)        
         

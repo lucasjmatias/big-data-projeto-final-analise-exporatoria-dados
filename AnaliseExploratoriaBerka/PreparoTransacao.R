@@ -2,11 +2,12 @@ read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
 
 unique(trans$type)
 
+trans$type <- gsub("PRIJEM", "credito", trans$type)
+trans$type <- gsub("VYDAJ", "debito", trans$type)
+
+
 trans <- trans %>%
         dplyr::filter(type != "VYBER") %>%
-        mutate(type = ifelse(
-                        type == "PRIJEM", "credito", 
-                          ifelse(type == "VYDAJ", "debito", type))) %>%
         mutate(amount = as.numeric(amount)) %>%
         select(account_id, type, amount) %>%
         group_by(account_id) %>%

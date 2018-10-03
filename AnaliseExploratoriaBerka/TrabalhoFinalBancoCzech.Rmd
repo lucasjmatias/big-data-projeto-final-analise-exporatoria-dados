@@ -54,6 +54,17 @@ client <- client %>%
 
 ```
 
+##Conta
+O tratamento da conta incluí renomear as frequências da conta e seleção dos campos importantes ao estudo.
+```{r}
+#Tradução
+account$frequency <- gsub("POPLATEK MESICNE", "mensal", account$frequency)
+account$frequency <- gsub("POPLATEK TYDNE", "semanal", account$frequency)
+account$frequency <- gsub("POPLATEK PO OBRATU", "acadatransacao", account$frequency)
+account$frequency <- as.factor(account$frequency)
+account <- select(account, account_id, district_id, frequency)
+```
+
 ##Distrito
 O tratamento inicial da relação distrito começa na renomeação dos campos para melhor entendimento. Conversão dos campos de unemp_95 e unemp_96 para numéricos. Limpeza dos valores NA. Cálculo da taxa de desemprego entre os anos 95 e 96. E seleção dos valores que serão usados neste estudo.
 ```{r}
@@ -79,7 +90,6 @@ district[is.na(district$unemp_95),12] <- 1
 
 ##Cartão
 O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo. Preparamos então o tipo do cartão como categórica.
-
 ```{r}
 card <- card %>%
         select(card_id, disp_id, type) %>%
@@ -89,15 +99,14 @@ card <- card %>%
 ##Transação
 Na relação de transação, identificamos alguns valores como "VYBER" que não estão descritos na documentação e não pareceu ser pertinente aos nossos estudos, por isso foi filtrado. O tipo de transação foi traduzido para facilitar o entendimento. E foi feito um agrupamento pela conta para facilitar o relacionamento de 1 para 1 com os valores que nos interessam. 
 ```{r}
-read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
-
 unique(trans$type)
+
+trans$type <- gsub("PRIJEM", "credito", trans$type)
+trans$type <- gsub("VYDAJ", "debito", trans$type)
+
 
 trans <- trans %>%
         dplyr::filter(type != "VYBER") %>%
-        mutate(type = ifelse(
-                        type == "PRIJEM", "credito", 
-                          ifelse(type == "VYDAJ", "debito", type))) %>%
         mutate(amount = as.numeric(amount)) %>%
         select(account_id, type, amount) %>%
         group_by(account_id) %>%
