@@ -23,7 +23,7 @@ library(lubridate)
 
 ```
 
-#Carregar os dados
+#Carga dos dados
 Utilizamos a função read.csv2 que nos permite carregar os dados disponíveis em texto, no formato CSV.
 
 ```{r}
@@ -33,6 +33,7 @@ read.csv2("./dados/card.asc", stringsAsFactors = FALSE) -> card
 read.csv2("./dados/disp.asc", stringsAsFactors = FALSE) -> disp
 read.csv2("./dados/district.asc", stringsAsFactors = FALSE) -> district
 read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
+read.csv2("./dados/loan.asc", stringsAsFactors = FALSE) -> loan
 
 ```
 
@@ -125,6 +126,24 @@ unique(disp$type)
 disp <- disp %>%
         dplyr::filter(type == "OWNER") %>%
         select(disp_id, client_id, account_id)
+```
+
+
+##Empréstimo
+No preparo da relação de empréstimo, traduzimos os status para os significados reais, também preparamos a taxa de pagamento e selecionamos os campos úteis ao estudo.
+```{r}
+unique(loan$status)
+loan$status <- gsub("A", "finalizado", loan$status)
+loan$status <- gsub("B", "finalizado nao pago", loan$status)
+loan$status <- gsub("C", "vigente", loan$status)
+loan$status <- gsub("D", "em debito", loan$status)
+loan$status <- as.factor(loan$status)
+loan$payments = as.numeric(loan$payments)
+loan$amount = as.numeric(loan$amount)
+
+loan <- loan %>%
+        mutate(payments_rate = payments / amount) %>%
+        select(loan_id, account_id, amount, duration, status, payments_rate)
 ```
 
 

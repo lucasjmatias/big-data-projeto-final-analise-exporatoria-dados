@@ -6,6 +6,8 @@ read.csv2("./dados/card.asc", stringsAsFactors = FALSE) -> card
 read.csv2("./dados/disp.asc", stringsAsFactors = FALSE) -> disp
 read.csv2("./dados/district.asc", stringsAsFactors = FALSE) -> district
 read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
+read.csv2("./dados/loan.asc", stringsAsFactors = FALSE) -> loan
+
 
 
 #account:
