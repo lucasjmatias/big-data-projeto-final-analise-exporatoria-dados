@@ -87,7 +87,7 @@ card <- card %>%
 ```
 
 ##Transação
-
+Na relação de transação, identificamos alguns valores como "VYBER" que não estão descritos na documentação e não pareceu ser pertinente aos nossos estudos, por isso foi filtrado. O tipo de transação foi traduzido para facilitar o entendimento. E foi feito um agrupamento pela conta para facilitar o relacionamento de 1 para 1 com os valores que nos interessam. 
 ```{r}
 read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
 
@@ -95,13 +95,18 @@ unique(trans$type)
 
 trans <- trans %>%
         dplyr::filter(type != "VYBER") %>%
-        mutate(type = ifelse(type == "PRIJEM", "credito", ifelse(type == "VYDAJ", "debito", type))) %>%
+        mutate(type = ifelse(
+                        type == "PRIJEM", "credito", 
+                          ifelse(type == "VYDAJ", "debito", type))) %>%
         mutate(amount = as.numeric(amount)) %>%
         select(account_id, type, amount) %>%
         group_by(account_id) %>%
-        summarise(credito = sum(ifelse(type == "credito", amount, 0)), debito = sum(ifelse(type == "debito", amount, 0))) %>%
+        summarise(
+          credito = sum(ifelse(type == "credito", amount, 0)),
+          debito = sum(ifelse(type == "debito", amount, 0)),
+          count = n()) %>%
         mutate(withdraw_rate = debito / credito) %>%
-        select(account_id, withdraw_rate)
+        select(account_id, withdraw_rate, count)
 ```
 
 
