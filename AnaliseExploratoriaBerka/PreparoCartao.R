@@ -11,7 +11,8 @@ card <- select(card, card_id, disp_id, type)
 
 card <- card %>%
         select(card_id, disp_id, type) %>%
-        mutate(type = as.factor(type)) 
+        mutate(type = as.factor(type))
 
 View(card)
 card
+summary(card)
