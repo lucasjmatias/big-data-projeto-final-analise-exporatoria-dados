@@ -34,6 +34,7 @@ read.csv2("./dados/disp.asc", stringsAsFactors = FALSE) -> disp
 read.csv2("./dados/district.asc", stringsAsFactors = FALSE) -> district
 read.csv2("./dados/trans.asc", stringsAsFactors = FALSE) -> trans
 read.csv2("./dados/loan.asc", stringsAsFactors = FALSE) -> loan
+read.csv2("./dados/order.asc", stringsAsFactors = FALSE) -> order
 
 ```
 
@@ -146,6 +147,26 @@ loan <- loan %>%
         select(loan_id, account_id, amount, duration, status, payments_rate)
 ```
 
+##Ordem de Pagamento
+No preparo da ordem de pagamento, o texto do tipo de ordem é traduzido, ignoramos os que não possuem nenhum tipo especificado e selecionamos os dados importantes a este estudo através do agrupamento pela conta.
+```{r}
+unique(order$k_symbol)
+order$k_symbol = gsub("POJISTNE", "seguro", order$k_symbol)
+order$k_symbol = gsub("SIPO", "domestico", order$k_symbol)
+order$k_symbol = gsub("LEASING", "leasing", order$k_symbol)
+order$k_symbol = gsub("UVER", "divida", order$k_symbol)
+order$amount = as.numeric(order$amount)
+
+order <- order %>%
+         dplyr::filter(k_symbol != " ") %>%
+         group_by(account_id) %>%
+         summarise(
+            total_amount = sum(amount),
+            quant = n(),
+            ja_pagou_seguro = any(k_symbol == "seguro"),
+            media_transf = sum(amount) / n()
+         )
+```
 
 
 
