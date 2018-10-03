@@ -109,6 +109,14 @@ trans <- trans %>%
         select(account_id, withdraw_rate, count)
 ```
 
+##Disposição
+A relação de disposição é útil para auxiliar nos relacionamentos. Como nosso estudo centraliza no pagamento ou não de dívidas, sendo que somente os donos da conta conseguem pegar empréstimos, filtramos as disposições para os donos das contas que serão o alvo do estudo.
+```{r}
+unique(disp$type)
+disp <- disp %>%
+        dplyr::filter(type == "OWNER") %>%
+        select(disp_id, client_id, account_id)
+```
 
 
 
