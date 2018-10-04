@@ -30,3 +30,4 @@ district<- left_join(district,district_media, by = c("dist_codigo"="dist_codigo"
 #limpar
 district_media <- NULL
 
+#limpeza no script original ver comentario
