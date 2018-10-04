@@ -9,9 +9,10 @@ card$type <- as.factor(card$type)
 card <- select(card, card_id, disp_id, type)
 
 
+colnames(card)[3] <- 'card_type'
 card <- card %>%
-        select(card_id, disp_id, type) %>%
-        mutate(type = as.factor(type))
+  select(card_id, disp_id, card_type) %>%
+  mutate(card_type = as.factor(card_type))
 
 View(card)
 card

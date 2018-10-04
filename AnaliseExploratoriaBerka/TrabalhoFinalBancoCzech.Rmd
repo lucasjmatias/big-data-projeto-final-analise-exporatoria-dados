@@ -64,7 +64,7 @@ account$frequency <- gsub("POPLATEK MESICNE", "mensal", account$frequency)
 account$frequency <- gsub("POPLATEK TYDNE", "semanal", account$frequency)
 account$frequency <- gsub("POPLATEK PO OBRATU", "acadatransacao", account$frequency)
 account$frequency <- as.factor(account$frequency)
-account <- select(account, account_id, district_id, frequency)
+account <- select(account, account_id, frequency)
 ```
 
 ##Distrito
@@ -93,9 +93,10 @@ district[is.na(district$unemp_95),12] <- 1
 ##Cartão
 O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo. Preparamos então o tipo do cartão como categórica.
 ```{r}
+colnames(card)[3] <- 'card_type'
 card <- card %>%
-        select(card_id, disp_id, type) %>%
-        mutate(type = as.factor(type))
+        select(card_id, disp_id, card_type) %>%
+        mutate(card_type = as.factor(card_type))
 ```
 
 ##Transação
@@ -115,9 +116,9 @@ trans <- trans %>%
         summarise(
           credito = sum(ifelse(type == "credito", amount, 0)),
           debito = sum(ifelse(type == "debito", amount, 0)),
-          count = n()) %>%
+          quant_trans = n()) %>%
         mutate(withdraw_rate = debito / credito) %>%
-        select(account_id, withdraw_rate, count)
+        select(account_id, withdraw_rate, quant_trans)
 ```
 
 ##Disposição
@@ -145,6 +146,13 @@ loan$amount = as.numeric(loan$amount)
 loan <- loan %>%
         mutate(payments_rate = payments / amount) %>%
         select(loan_id, account_id, amount, duration, status, payments_rate)
+
+colnames(loan)[3] <- 'loan_amount'
+colnames(loan)[4] <- 'loan_duration'
+colnames(loan)[5] <- 'loan_status'
+colnames(loan)[6] <- 'loan_payment_rate'
+
+
 ```
 
 ##Ordem de Pagamento
@@ -161,13 +169,28 @@ order <- order %>%
          dplyr::filter(k_symbol != " ") %>%
          group_by(account_id) %>%
          summarise(
-            total_amount = sum(amount),
-            quant = n(),
+            total_ordem = sum(amount),
+            quant_ordem = n(),
             ja_pagou_seguro = any(k_symbol == "seguro"),
             media_transf = sum(amount) / n()
          )
 ```
 
+#União dos dados
+
+```{r}
+
+
+dados <- client %>%
+         inner_join(disp, by = "client_id") %>%
+         left_join(card, by = "disp_id") %>%
+         left_join(district, by = "district_id") %>%
+         inner_join(account, by = "account_id") %>%
+         left_join(order, by= "account_id") %>%
+         left_join(trans, by="account_id") %>%
+         inner_join(loan, by="account_id")
+
+```
 
 
 
