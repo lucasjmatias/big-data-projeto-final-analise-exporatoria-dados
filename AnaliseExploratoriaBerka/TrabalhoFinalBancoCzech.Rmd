@@ -87,7 +87,7 @@ district[is.na(district$unemp_95),12] <- 1
 #Cálculo da taxa de desemprego e seleção de valores
   district %>%
   mutate(unemp_r = ifelse(unemp_95 == 0 | unemp_96 == 0, 1, unemp_96/unemp_95)) %>%
-  select(district_id, district_name, avg_sal, unemp_95, unemp_96) -> district
+  select(district_id, district_name, avg_sal, unemp_r) -> district
 ```
 
 ##Cartão
@@ -95,8 +95,8 @@ O tratamento inicial da relação cartão seleciona os campos que serão úteis 
 ```{r}
 colnames(card)[3] <- 'card_type'
 card <- card %>%
-        select(card_id, disp_id, card_type) %>%
-        mutate(card_type = as.factor(card_type))
+        select(card_id, disp_id, card_type) 
+#%>%     mutate(card_type = as.factor(card_type))
 ```
 
 ##Transação
