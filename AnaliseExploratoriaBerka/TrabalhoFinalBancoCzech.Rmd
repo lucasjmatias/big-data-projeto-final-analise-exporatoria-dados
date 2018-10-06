@@ -7,6 +7,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+#install.packages("fastDummies")
 ```
 \newpage
 \tableofcontents
@@ -20,6 +22,7 @@ O objetivo do nosso trabalho é identificar quais fatores que podem impactar no 
 #Carrega as bibliotecas
 library(tidyverse)
 library(lubridate)
+library(fastDummies)
 
 ```
 
@@ -136,10 +139,10 @@ No preparo da relação de empréstimo, traduzimos os status para os significado
 ```{r}
 unique(loan$status)
 loan$status <- gsub("A", "finalizado", loan$status)
-loan$status <- gsub("B", "finalizado nao pago", loan$status)
+loan$status <- gsub("B", "nao pago", loan$status)
 loan$status <- gsub("C", "vigente", loan$status)
 loan$status <- gsub("D", "em debito", loan$status)
-loan$status <- as.factor(loan$status)
+#loan$status <- as.factor(loan$status)
 loan$payments = as.numeric(loan$payments)
 loan$amount = as.numeric(loan$amount)
 
@@ -178,6 +181,7 @@ order <- order %>%
 
 #União dos dados
 
+##Preparar união
 ```{r}
 
 
@@ -188,10 +192,21 @@ dados <- client %>%
          inner_join(account, by = "account_id") %>%
          left_join(order, by= "account_id") %>%
          left_join(trans, by="account_id") %>%
-         inner_join(loan, by="account_id")
+         left_join(loan, by="account_id")
 
 ```
 
+##Preparar NAs
+```{r}
+dados[is.na(dados$card_type),8] <- 'nenhum'
+dados[is.na(dados$total_ordem),13] <- 0
+dados[is.na(dados$quant_ordem),14] <- 0
+dados[is.na(dados$ja_pagou_seguro),15] <- FALSE
+dados[is.na(dados$media_transf),16] <- 0
+dados[is.na(dados$loan_amount),20] <- 0
+dados[is.na(dados$loan_duration),21] <- 0
+dados[is.na(dados$loan_status),22] <- 'nenhum'
+```
 
 
 
