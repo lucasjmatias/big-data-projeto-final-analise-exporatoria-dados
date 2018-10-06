@@ -3,22 +3,19 @@ View(dados)
 summary(dados)
 
 
-dados[is.na(dados$card_type),8] <- 'nenhum'
-dados[is.na(dados$total_ordem),13] <- 0
-dados[is.na(dados$quant_ordem),14] <- 0
-dados[is.na(dados$ja_pagou_seguro),15] <- FALSE
-dados[is.na(dados$media_transf),16] <- 0
-dados[is.na(dados$loan_amount),20] <- 0
-dados[is.na(dados$loan_duration),21] <- 0
-dados[is.na(dados$loan_status),22] <- 'nenhum'
+?as.factor
+
+#Existe relação entre valor do empréstimo e problemas com empréstimo
+boxplot(loan_amount~problemas_loan, data = dadosLoan)
+lm(dadosLoan, formula = loan_amount ~ problemas_loan) -> modelo
+summary(modelo)
 
 
 
-dados$card_type = as.factor(dados$card_type)
-dados$loan_status = as.factor(dados$loan_status)
+dadosLoan 
 
 
-View(dados)
+View(dadosLoan)
 
 str(dados)
 
@@ -26,7 +23,7 @@ dados <- fastDummies::dummy_cols(dados, select_columns = "loan_status")
 
 ggplot(dados, aes(x=loan_status, y = loan_amount)) + boxplot()
 
-boxplot(loan_amount~loan_status, data = dados)
+boxplot(loan_amount~loan_status, data = dadosLoan)
 
 
 boxplot(dados$withdraw_rate ~ dados$loan_amount)

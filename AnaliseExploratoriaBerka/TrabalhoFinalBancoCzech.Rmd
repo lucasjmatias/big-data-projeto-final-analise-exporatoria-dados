@@ -208,7 +208,20 @@ dados[is.na(dados$loan_duration),21] <- 0
 dados[is.na(dados$loan_status),22] <- 'nenhum'
 ```
 
+##Preparar factors
+```{r}
+dados$card_type = as.factor(dados$card_type)
+dados$loan_status = as.factor(dados$loan_status)
+```
 
+##Preparar dados de empréstimo
+```{r}
+dadosLoan <- dados %>%
+             dplyr::filter(loan_status != "nenhum") %>%
+             mutate(problemas_loan = if_else(loan_status == "em debito" | loan_status == "nao pago", TRUE, FALSE))
+dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
+
+```
 
 
 
