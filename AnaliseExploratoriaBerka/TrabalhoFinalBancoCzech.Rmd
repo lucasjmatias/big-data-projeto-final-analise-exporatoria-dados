@@ -26,6 +26,18 @@ library(fastDummies)
 
 ```
 
+#Funções utilitárias
+Criamos a função prepararNA para simplificar o tratamento dos dados indisponíveis.
+```{r}
+
+prepararNA <- function (tabela, nomeColuna, valorSeNA) {
+  indiceDados <- which(colnames(tabela)==nomeColuna)
+  tabela[is.na(tabela[,indiceDados]),indiceDados] <- valorSeNA
+  return(tabela)
+}
+
+```
+
 #Carga dos dados
 Utilizamos a função read.csv2 que nos permite carregar os dados disponíveis em texto, no formato CSV.
 
@@ -67,7 +79,13 @@ account$frequency <- gsub("POPLATEK MESICNE", "mensal", account$frequency)
 account$frequency <- gsub("POPLATEK TYDNE", "semanal", account$frequency)
 account$frequency <- gsub("POPLATEK PO OBRATU", "acadatransacao", account$frequency)
 account$frequency <- as.factor(account$frequency)
-account <- select(account, account_id, frequency)
+
+account <- account %>%
+          mutate(account_date = paste0("19", date)) %>%
+          mutate(account_date = as.Date.character(account_date, "%Y%m%d")) %>%
+          select(account_id, frequency, account_date)
+
+
 ```
 
 ##Distrito
@@ -114,14 +132,16 @@ trans$type <- gsub("VYDAJ", "debito", trans$type)
 trans <- trans %>%
         dplyr::filter(type != "VYBER") %>%
         mutate(amount = as.numeric(amount)) %>%
-        select(account_id, type, amount) %>%
+        mutate(balance = as.numeric(balance)) %>%
+        select(account_id, type, amount, balance) %>%
         group_by(account_id) %>%
         summarise(
           credito = sum(ifelse(type == "credito", amount, 0)),
           debito = sum(ifelse(type == "debito", amount, 0)),
+          saldo_medio_em_conta = mean(balance),
           quant_trans = n()) %>%
         mutate(withdraw_rate = debito / credito) %>%
-        select(account_id, withdraw_rate, quant_trans)
+        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta)
 ```
 
 ##Disposição
@@ -174,6 +194,8 @@ order <- order %>%
          summarise(
             total_ordem = sum(amount),
             quant_ordem = n(),
+            paga_divida = any(k_symbol == "divida"),
+            paga_leasing = any(k_symbol == "leasing"),
             ja_pagou_seguro = any(k_symbol == "seguro"),
             media_transf = sum(amount) / n()
          )
@@ -198,14 +220,18 @@ dados <- client %>%
 
 ##Preparar NAs
 ```{r}
-dados[is.na(dados$card_type),8] <- 'nenhum'
-dados[is.na(dados$total_ordem),13] <- 0
-dados[is.na(dados$quant_ordem),14] <- 0
-dados[is.na(dados$ja_pagou_seguro),15] <- FALSE
-dados[is.na(dados$media_transf),16] <- 0
-dados[is.na(dados$loan_amount),20] <- 0
-dados[is.na(dados$loan_duration),21] <- 0
-dados[is.na(dados$loan_status),22] <- 'nenhum'
+
+dados <- dados %>%
+         prepararNA("card_type", "nenhum") %>%
+         prepararNA("total_ordem", 0) %>%
+         prepararNA("quant_ordem", 0) %>%
+         prepararNA("ja_pagou_seguro", FALSE) %>%
+         prepararNA("media_transf", FALSE) %>%
+         prepararNA("loan_amount", 0) %>%
+         prepararNA("loan_duration", 0) %>%
+         prepararNA("loan_status", "nenhum")
+
+
 ```
 
 ##Preparar factors

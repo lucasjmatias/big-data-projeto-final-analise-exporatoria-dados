@@ -10,7 +10,21 @@ boxplot(loan_amount~problemas_loan, data = dadosLoan)
 lm(dadosLoan, formula = loan_amount ~ problemas_loan) -> modelo
 summary(modelo)
 
+boxplot(saldo_medio_em_conta~problemas_loan, data = dadosLoan)
+lm(dadosLoan, formula = saldo_medio_em_conta ~ problemas_loan) -> modelo2
+summary(modelo2)
 
+
+lm(dadosLoan, formula = loan_payment_rate ~ problemas_loan) -> modelo
+summary(modelo)
+boxplot(loan_payment_rate~problemas_loan, data = dadosLoan)
+
+
+
+
+pairs(select(dadosLoan, problemas_loan, loan_amount, age, saldo_medio_em_conta, withdraw_rate, quant_trans, loan_payment_rate))
+
+pairs(select(dadosLoan, problemas_loan, loan_payment_rate))
 
 dadosLoan 
 
