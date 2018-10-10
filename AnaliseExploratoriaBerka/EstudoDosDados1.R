@@ -88,3 +88,58 @@ hist(dados$loan_amount)
 hist(dados, formula = loan_status ~ ja_pagou_seguro)
 
 ?lm
+
+
+dadosLoan <- dadosLoan %>%
+               mutate(loan_year = year(loan_date))
+
+dadosLoan95$problemas_loan <- as.factor(dadosLoan95$problemas_loan)
+boxplot(dadosLoan95$problemas_loan)
+
+hist(dadosLoan95$problemas_loan)
+
+boxplot(loan_date~problemas_loan, data = dadosLoan)
+
+?boxplot
+
+ggplot(dadosLoan, aes(x = loan_date, y = problemas_loan)) + geom_bar(stat = "identity", position=position_dodge(), aes(fill=card_type))
+
+
+anoPorProblemas = dadosLoan %>%
+                  mutate(loan_year = year(loan_date)) %>%
+                  group_by(loan_year) %>%
+                  summarise(
+                    count = n(),
+                    problemas = sum(ifelse(problemas_loan == TRUE, 1, 0))
+                  ) %>%
+                  mutate(taxa_problema = problemas / count)
+
+boxplot(taxa_problema~loan_year, data = anoPorProblemas)
+
+anoPorProblemas$loan_year = as.factor(anoPorProblemas$loan_year)
+ggplot(anoPorProblemas, aes(x = loan_year, y = count)) +
+  geom_bar(stat = "identity", position=position_dodge(), aes(fill=taxa_problema))
+
+
+View(anoPorProblemas)
+
+oneway.test(dados, formula = age ~ loan_status)
+
+dadosLoan <- dadosLoan %>%
+  mutate(has_card = ifelse(card_type=="nenhum", FALSE, TRUE))
+
+chisq.test(table(dadosLoan$has_card, dadosLoan$problemas_loan))
+ggplot(dadosLoan, aes(has_card)) +
+  geom_bar(position=position_dodge(), aes(fill=problemas_loan))
+
+?glm
+
+
+chisq.test(table(dadosLoan$unemp_r, dadosLoan$problemas_loan))
+
+oneway.test(dadosLoan, formula = avg_sal ~ problemas_loan)
+str(dadosLoan)
+pairs(select(dadosLoan, problemas_loan, avg_sal, unemp_r, saldo_medio_em_conta, loan_amount))
+
+dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
+glm(formula = problemas_loan ~ has_card, data = dadosLoan) -> modelo

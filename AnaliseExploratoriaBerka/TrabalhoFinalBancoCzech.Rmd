@@ -36,6 +36,10 @@ prepararNA <- function (tabela, nomeColuna, valorSeNA) {
   return(tabela)
 }
 
+prepararData <- function (vetorDataYYMMDD) {
+  as.Date(paste0("19", vetorDataYYMMDD), "%Y%m%d")
+}
+
 ```
 
 #Carga dos dados
@@ -79,11 +83,11 @@ account$frequency <- gsub("POPLATEK MESICNE", "mensal", account$frequency)
 account$frequency <- gsub("POPLATEK TYDNE", "semanal", account$frequency)
 account$frequency <- gsub("POPLATEK PO OBRATU", "acadatransacao", account$frequency)
 account$frequency <- as.factor(account$frequency)
+account$account_date <- prepararData(account$date)
 
 account <- account %>%
-          mutate(account_date = paste0("19", date)) %>%
-          mutate(account_date = as.Date.character(account_date, "%Y%m%d")) %>%
-          select(account_id, frequency, account_date)
+          mutate(account_age = year(currentdate) - year(account_date)) %>%
+          select(account_id, frequency, account_date, account_age)
 
 
 ```
@@ -103,7 +107,7 @@ district$unemp_95 = as.numeric(district$unemp_95)
 district$unemp_96 = as.numeric(district$unemp_96)
 
 #Limpeza de NA
-district[is.na(district$unemp_95),12] <- 1
+district = prepararNA(district, "unemp_95", 1)
 
 #Cálculo da taxa de desemprego e seleção de valores
   district %>%
@@ -127,6 +131,7 @@ unique(trans$type)
 
 trans$type <- gsub("PRIJEM", "credito", trans$type)
 trans$type <- gsub("VYDAJ", "debito", trans$type)
+trans$date <- prepararData(trans$date)
 
 
 trans <- trans %>%
@@ -166,9 +171,11 @@ loan$status <- gsub("D", "em debito", loan$status)
 loan$payments = as.numeric(loan$payments)
 loan$amount = as.numeric(loan$amount)
 
+loan$loan_date = prepararData(loan$date)
+
 loan <- loan %>%
         mutate(payments_rate = payments / amount) %>%
-        select(loan_id, account_id, amount, duration, status, payments_rate)
+        select(loan_id, account_id, amount, duration, status, payments_rate, loan_date)
 
 colnames(loan)[3] <- 'loan_amount'
 colnames(loan)[4] <- 'loan_duration'
@@ -249,5 +256,44 @@ dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
 
 ```
 
+#Estudo dos dados
+##Empréstimos
+Observamos que contratos mais novos apresentam menos problemas com pagamentos
+```{r}
+anoPorProblemas = dadosLoan %>%
+                  mutate(loan_year = year(loan_date)) %>%
+                  group_by(loan_year) %>%
+                  summarise(
+                    count = n(),
+                    problemas = sum(ifelse(problemas_loan == TRUE, 1, 0))
+                  ) %>%
+                  mutate(taxa_problema = problemas / count)
+
+ggplot(anoPorProblemas, aes(x = loan_year, y = count)) +
+  geom_bar(stat = "identity", position=position_dodge(), aes(fill=taxa_problema))
+
+```
+
+
+E também observamos maiores problemas nos empréstimos quando a medida que o valor é maior
+
+```{r}
+boxplot(loan_amount~problemas_loan, data = dadosLoan)
+lm(dadosLoan, formula = loan_amount ~ problemas_loan) -> modelo
+summary(modelo)
+
+```
+
+
+Identificamos também que pessoas que possuem cartões tem menores chances de ter problemas com os empréstimos
+
+```{r}
+dadosLoan <- dadosLoan %>%
+  mutate(has_card = ifelse(card_type=="nenhum", FALSE, TRUE))
+
+chisq.test(table(dadosLoan$has_card, dadosLoan$problemas_loan))
+ggplot(dadosLoan, aes(has_card)) +
+  geom_bar(position=position_dodge(), aes(fill=problemas_loan))
+```
 
 
