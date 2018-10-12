@@ -1,0 +1,113 @@
+---
+title: "Avaliação dados MBA"
+output: word_document
+---
+
+Objetivo:
+
+Análise do salário inicial de recem formados em MBA
+
+1. Leitura dos dados
+
+```{r}
+View(mba)
+str(mba)
+
+```
+
+2. Analise do Salários e limpeza do banco
+
+
+```{r}
+mean(mba$salary)
+median(mba$salary)
+hist(mba$salary)
+
+# Estudantes que revelaram o seu salario
+responderam <- mba[which (mba$salary > 1000)  , ]
+dim(responderam)
+View (responderam)
+hist(responderam$salary)
+
+
+describe(responderam)
+
+boxplot(responderam$salary,
+        main= "Boxplot do salario",
+            horizontal=TRUE,
+            xlab="salary")
+
+oneway.test(responderam, formula=salary~sex)
+
+
+boxplot(responderam$salary ~ responderam$sex)
+
+#Valor p alto, aceita a Hipotese Nula, os salários de homens e mulheres em média são iguais
+
+```
+
+
+
+Retirada do Outlier
+```{r}
+
+responderamsoutlier<- responderam[which (responderam$salary < 200000)  , ]
+
+boxplot(responderamsoutlier$salary,
+        main= "Boxplot do salario sem outlier",
+            horizontal=TRUE,
+            xlab="salary")
+
+oneway.test(responderamsoutlier, formula=salary~sex)
+
+
+boxplot(responderamsoutlier$salary ~ responderamsoutlier$sex)
+
+
+
+```
+
+```{r}
+oneway.test(responderamsoutlier$salary ~ responderamsoutlier$quarter)
+boxplot(responderamsoutlier$salary ~ responderamsoutlier$quarter)
+
+regressao1<-lm(responderamsoutlier$salary ~ responderamsoutlier$quarter)
+regressao1
+
+#Quem está no primeiro quartil tem salário em média mais alto
+
+#redução do salário anual em -3744 por diminuição do quartil
+```
+
+```{r}
+
+regressao2<-lm(responderamsoutlier$salary ~ responderamsoutlier$gmat_tot)
+summary (regressao2)
+```
+
+```{r}
+regressao3<-lm(responderamsoutlier$salary ~ responderamsoutlier$frstlang)
+summary (regressao3)
+
+#R2 baixo
+```
+
+```{r}
+boxplot(salary ~ work_yrs ,data=responderamsoutlier, main="Experiencia X salário", ylab="Experiencia", xlab="Salario", horizontal=TRUE)
+
+```
+
+```{r}
+scatterplot(salary ~ work_yrs ,data=responderamsoutlier, main="grafico de dispersão ", xlab="Experiencia (anos)", ylab="Salario")
+```
+```{r}
+
+#Análise de correlação ( achei bem legal)
+library(corrplot)
+
+C <-cor(responderamsoutlier [, c("age","work_yrs", "gmat_tot", "gmat_qpc", "gmat_vpc", "gmat_tpc", "s_avg", "f_avg", "quarter", "satis")]) 
+corrplot(C, method="circle")
+
+
+```
+
