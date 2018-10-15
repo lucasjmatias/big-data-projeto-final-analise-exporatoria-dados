@@ -101,10 +101,12 @@ colnames(district)[2] <- 'district_name'
 colnames(district)[11] <- 'avg_sal'
 colnames(district)[12] <- 'unemp_95'
 colnames(district)[13] <- 'unemp_96'
+colnames(district)[14] <- 'numb_enter'
 
 #Converter campos para numérico
 district$unemp_95 = as.numeric(district$unemp_95)
 district$unemp_96 = as.numeric(district$unemp_96)
+district$numb_enter = as.numeric(district$numb_enter)
 
 #Limpeza de NA
 district = prepararNA(district, "unemp_95", 1)
@@ -112,7 +114,7 @@ district = prepararNA(district, "unemp_95", 1)
 #Cálculo da taxa de desemprego e seleção de valores
   district %>%
   mutate(unemp_r = ifelse(unemp_95 == 0 | unemp_96 == 0, 1, unemp_96/unemp_95)) %>%
-  select(district_id, district_name, avg_sal, unemp_r) -> district
+  select(district_id, district_name, avg_sal, unemp_r, numb_enter) -> district
 ```
 
 ##Cartão
@@ -143,10 +145,11 @@ trans <- trans %>%
         summarise(
           credito = sum(ifelse(type == "credito", amount, 0)),
           debito = sum(ifelse(type == "debito", amount, 0)),
+          trans_amount = sum(amount),
           saldo_medio_em_conta = mean(balance),
           quant_trans = n()) %>%
         mutate(withdraw_rate = debito / credito) %>%
-        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta)
+        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, trans_amount)
 ```
 
 ##Disposição
@@ -174,8 +177,9 @@ loan$amount = as.numeric(loan$amount)
 loan$loan_date = prepararData(loan$date)
 
 loan <- loan %>%
+        mutate(loan_age = year(currentdate) - year(loan_date)) %>%
         mutate(payments_rate = payments / amount) %>%
-        select(loan_id, account_id, amount, duration, status, payments_rate, loan_date)
+        select(loan_id, account_id, amount, duration, status, payments_rate, loan_date, loan_age)
 
 colnames(loan)[3] <- 'loan_amount'
 colnames(loan)[4] <- 'loan_duration'

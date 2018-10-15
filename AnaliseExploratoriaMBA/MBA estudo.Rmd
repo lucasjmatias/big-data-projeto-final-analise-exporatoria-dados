@@ -1,21 +1,24 @@
 ---
 title: "Avaliação dados MBA"
-output: word_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 
 Objetivo:
 
 Análise do salário inicial de recem formados em MBA
 
-1. Leitura dos dados
+#1. Leitura dos dados
 
 ```{r}
-View(mba)
+read.csv2("./dados/mba.csv", stringsAsFactors = FALSE) -> mba
+
 str(mba)
 
 ```
 
-2. Analise do Salários e limpeza do banco
+#2. Analise do Salários e limpeza do banco
 
 
 ```{r}
@@ -26,11 +29,10 @@ hist(mba$salary)
 # Estudantes que revelaram o seu salario
 responderam <- mba[which (mba$salary > 1000)  , ]
 dim(responderam)
-View (responderam)
 hist(responderam$salary)
 
 
-describe(responderam)
+#describe(responderam)
 
 boxplot(responderam$salary,
         main= "Boxplot do salario",
@@ -48,7 +50,7 @@ boxplot(responderam$salary ~ responderam$sex)
 
 
 
-Retirada do Outlier
+#3. Retirada do Outlier
 ```{r}
 
 responderamsoutlier<- responderam[which (responderam$salary < 200000)  , ]
@@ -98,14 +100,29 @@ boxplot(salary ~ work_yrs ,data=responderamsoutlier, main="Experiencia X salári
 ```
 
 ```{r}
-scatterplot(salary ~ work_yrs ,data=responderamsoutlier, main="grafico de dispersão ", xlab="Experiencia (anos)", ylab="Salario")
+library(car)
+scatterplot(salary ~ work_yrs, 
+            data=responderamsoutlier,
+            main="grafico de dispersão ",
+            xlab="Experiencia (anos)",
+            ylab="Salario")
 ```
 ```{r}
 
-#Análise de correlação ( achei bem legal)
+#4. Análise de correlação ( achei bem legal)
 library(corrplot)
 
-C <-cor(responderamsoutlier [, c("age","work_yrs", "gmat_tot", "gmat_qpc", "gmat_vpc", "gmat_tpc", "s_avg", "f_avg", "quarter", "satis")]) 
+C <-cor(responderamsoutlier [, 
+                            c("age",
+                              "work_yrs",
+                              "gmat_tot",
+                              "gmat_qpc",
+                              "gmat_vpc",
+                              "gmat_tpc",
+                              "s_avg",
+                              "f_avg",
+                              "quarter",
+                              "satis")]) 
 corrplot(C, method="circle")
 
 

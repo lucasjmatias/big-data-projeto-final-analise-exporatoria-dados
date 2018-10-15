@@ -141,5 +141,25 @@ oneway.test(dadosLoan, formula = avg_sal ~ problemas_loan)
 str(dadosLoan)
 pairs(select(dadosLoan, problemas_loan, avg_sal, unemp_r, saldo_medio_em_conta, loan_amount))
 
-dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
-glm(formula = problemas_loan ~ has_card, data = dadosLoan) -> modelo
+dadosLoan$problemas_loan = as.double(dadosLoan$problemas_loan)
+dadosLoan$ja_pagou_seguro = as.double(dadosLoan$ja_pagou_seguro)
+dadosLoan$paga_divida = as.double(dadosLoan$paga_divida)
+dadosLoan$paga_leasing = as.double(dadosLoan$paga_leasing)
+
+
+lm(formula = problemas_loan ~ has_card + 
+     age + 
+     loan_age + account_age + loan_duration + loan_amount + loan_payment_rate +
+     paga_leasing +
+     ja_pagou_seguro + avg_sal + quant_trans + media_transf + numb_enter +
+     quant_ordem + total_ordem + unemp_r + saldo_medio_em_conta, data = dadosLoan) -> modelo
+summary(modelo)
+
+ggplot(data = dadosLoan) +  geom_bar(mapping = aes(x = problemas_loan, fill=has_card))
+
+
+ggplot(data = dadosLoan, mapping = aes(x = problemas_loan, color = has_card)) +  geom_freqpoly(binwidth = 0.1)
+
+
+
+ggplot(data = dadosLoan, mapping = aes(x = avg_sal, y = saldo_medio_em_conta)) +  geom_point() 
