@@ -11,6 +11,7 @@ lm(dadosLoan, formula = loan_amount ~ problemas_loan) -> modelo
 summary(modelo)
 
 boxplot(saldo_medio_em_conta~problemas_loan, data = dadosLoan)
+plot(saldo_medio_em_conta~problemas_loan, data = dadosLoan)
 lm(dadosLoan, formula = saldo_medio_em_conta ~ problemas_loan) -> modelo2
 summary(modelo2)
 
@@ -24,7 +25,7 @@ boxplot(loan_payment_rate~problemas_loan, data = dadosLoan)
 
 pairs(select(dadosLoan, problemas_loan, loan_amount, age, saldo_medio_em_conta, withdraw_rate, quant_trans, loan_payment_rate))
 
-pairs(select(dadosLoan, problemas_loan, loan_payment_rate))
+pairs(select(dadosLoan, problemas_loan, saldo_medio_em_conta))
 
 dadosLoan 
 
@@ -62,7 +63,7 @@ ggplot(dados, aes(x = loan_status, y = loan_amount)) + geom_bar(stat = "identity
 
 
 
-hist(dados$loan_amount)
+hist(dados$saldo_medio_em_conta)
 
 lm(dados, formula = u ~ loan_amount) -> modelo
 
@@ -145,8 +146,12 @@ dadosLoan$problemas_loan = as.double(dadosLoan$problemas_loan)
 dadosLoan$ja_pagou_seguro = as.double(dadosLoan$ja_pagou_seguro)
 dadosLoan$paga_divida = as.double(dadosLoan$paga_divida)
 dadosLoan$paga_leasing = as.double(dadosLoan$paga_leasing)
+dadosLoan$has_card = as.double(dadosLoan$has_card)
+View(dadosLoan)
+str(dadosLoan)
 
 
+dadosLoan2$ja_pagou_seguro = as.double(dadosLoan2$ja_pagou_seguro)
 lm(formula = problemas_loan ~ has_card + 
      age + 
      loan_age + account_age + loan_duration + loan_amount + loan_payment_rate +
@@ -163,3 +168,49 @@ ggplot(data = dadosLoan, mapping = aes(x = problemas_loan, color = has_card)) + 
 
 
 ggplot(data = dadosLoan, mapping = aes(x = avg_sal, y = saldo_medio_em_conta)) +  geom_point() 
+
+
+
+
+lm(formula = problemas_loan ~ saldo_medio_em_conta, data = dadosLoan) -> modelo
+
+lm(formula = problemas_loan ~ account_age + loan_duration + loan_amount +
+     ja_pagou_seguro +
+     quant_ordem + saldo_medio_em_conta + media_transf + quant_trans + trans_amount, data = dadosLoan) -> modelo
+
+
+str(dadosLoan)
+dadosLoan2 <- select(dadosLoan,  age,  avg_sal,  unemp_r,  account_age,  total_ordem, 
+                     quant_ordem,  ja_pagou_seguro,  media_transf,  withdraw_rate,
+                     quant_trans,  saldo_medio_em_conta,  loan_id,  loan_amount,  loan_duration,  loan_payment_rate,
+                     loan_age,  problemas_loan,  has_card)
+
+dadosLoan2 <- select(dados, age, loan_amount, account_age, loan_duration, ja_pagou_seguro, trans_amount, numb_enter, avg_sal, unemp_r, saldo_medio_em_conta)
+lm(formula = problemas_loan ~ ., data = dadosLoan2) -> modelo
+
+dadosLoan2 <- select(dados, age, loan_amount, account_age, trans_amount, numb_enter, avg_sal, unemp_r)
+
+summary(modelo)
+
+
+
+lm(formula = problemas_loan ~ has_card + 
+     age + 
+     loan_age + account_age + loan_duration + loan_amount + loan_payment_rate +
+     paga_leasing +
+     ja_pagou_seguro + avg_sal + quant_trans + media_transf + numb_enter +
+     quant_ordem  + saldo_medio_em_conta, data = dadosLoan) -> modelo
+summary(modelo)
+
+str(dadosLoan2)
+loanScale <- as.matrix(scale(dadosLoan2))
+boxplot(loanScale)
+View(loanScale)
+
+fitLoan <- kmeans(loanScale, 3)
+fitLoan
+plot(loanScale, col=fitLoan$cluster, pch=15)
+
+clusplot(loanScale, fitLoan$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+

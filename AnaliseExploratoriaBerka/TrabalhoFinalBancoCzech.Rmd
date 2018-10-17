@@ -138,6 +138,7 @@ trans$date <- prepararData(trans$date)
 
 trans <- trans %>%
         dplyr::filter(type != "VYBER") %>%
+        dplyr::filter(year(date) > 97) %>%
         mutate(amount = as.numeric(amount)) %>%
         mutate(balance = as.numeric(balance)) %>%
         select(account_id, type, amount, balance) %>%
@@ -177,6 +178,7 @@ loan$amount = as.numeric(loan$amount)
 loan$loan_date = prepararData(loan$date)
 
 loan <- loan %>%
+        dplyr::filter(year(loan_date) > 97) %>%
         mutate(loan_age = year(currentdate) - year(loan_date)) %>%
         mutate(payments_rate = payments / amount) %>%
         select(loan_id, account_id, amount, duration, status, payments_rate, loan_date, loan_age)
@@ -224,7 +226,7 @@ dados <- client %>%
          left_join(district, by = "district_id") %>%
          inner_join(account, by = "account_id") %>%
          left_join(order, by= "account_id") %>%
-         left_join(trans, by="account_id") %>%
+         inner_join(trans, by="account_id") %>%
          left_join(loan, by="account_id")
 
 ```
