@@ -47,7 +47,7 @@ remove_outliers <- function(x, na.rm = TRUE, ...) {
 ```
 
 ```{r}
-remove_outliers(dadoscluster$unemp_r)
+dadoscluster$unemp_r = remove_outliers(dadoscluster$unemp_r)
 ```
 
 ```{r}
