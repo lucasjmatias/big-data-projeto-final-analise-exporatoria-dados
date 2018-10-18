@@ -1,0 +1,56 @@
+---
+title: "K-means Cluster"
+output: word_document
+---
+
+`
+```{r}
+
+#Estrutura dos dados
+str(dadosLoan)
+
+summary(dadosLoan)
+```
+```{r}
+boxplot(dadosLoan$avg_sal)
+```
+
+```{r}
+
+plot(dadosLoan$avg_sal)
+
+#Muitas entradas na que são outliers não vale a pena tirar do modelo
+```
+```{r}
+boxplot(dadosLoan$unemp_r)
+```
+
+```{r}
+plot(dadosLoan$unemp_r)
+
+# Poucos outliers, vou remover, mas vou gerar outra tabela para utiliza-la
+```
+```{r}
+dadoscluster <-dadosLoan
+```
+
+ 
+```{r}
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+```
+
+```{r}
+remove_outliers(dadoscluster$unemp_r)
+```
+
+```{r}
+boxplot(dadoscluster$unemp_r)
+```
+
