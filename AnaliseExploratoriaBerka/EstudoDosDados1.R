@@ -175,7 +175,7 @@ ggplot(data = dadosLoan, mapping = aes(x = avg_sal, y = saldo_medio_em_conta)) +
 lm(formula = problemas_loan ~ saldo_medio_em_conta, data = dadosLoan) -> modelo
 
 lm(formula = problemas_loan ~ account_age + loan_duration + loan_amount +
-     ja_pagou_seguro +
+     ja_pagou_seguro + no_account_users +
      quant_ordem + saldo_medio_em_conta + media_transf + quant_trans + trans_amount, data = dadosLoan) -> modelo
 
 
@@ -185,7 +185,7 @@ dadosLoan2 <- select(dadosLoan,  age,  avg_sal,  unemp_r,  account_age,  total_o
                      quant_trans,  saldo_medio_em_conta,  loan_id,  loan_amount,  loan_duration,  loan_payment_rate,
                      loan_age,  problemas_loan,  has_card)
 
-dadosLoan2 <- select(dados, age, loan_amount, account_age, loan_duration, ja_pagou_seguro, trans_amount, numb_enter, avg_sal, unemp_r, saldo_medio_em_conta)
+dadosLoan2 <- select(dadosLoan,problemas_loan, age, loan_amount, account_age, loan_duration, ja_pagou_seguro, trans_amount, numb_enter, avg_sal, unemp_r, no_account_users, saldo_medio_em_conta)
 lm(formula = problemas_loan ~ ., data = dadosLoan2) -> modelo
 
 dadosLoan2 <- select(dados, age, loan_amount, account_age, trans_amount, numb_enter, avg_sal, unemp_r)
@@ -213,4 +213,29 @@ plot(loanScale, col=fitLoan$cluster, pch=15)
 
 clusplot(loanScale, fitLoan$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
 
+
+
+lm(formula = problemas_loan ~ loan_duration + loan_amount +
+     ja_pagou_seguro + no_account_users +
+     quant_ordem + saldo_medio_em_conta + media_transf + quant_trans + trans_amount, data = dadosLoan) -> modelo
+str(dadosL)
+dadosLoan$problemas_loan = as.double(dadosLoan$problemas_loan)
+dadosLoan$ja_pagou_seguro = as.double(dadosLoan$ja_pagou_seguro)
+dadosLoan$paga_divida = as.double(dadosLoan$paga_divida)
+dadosLoan$paga_leasing = as.double(dadosLoan$paga_leasing)
+dadosLoan$has_card = as.double(dadosLoan$has_card)
+
+
+dadosLoan2 <- dadosLoan %>%
+              select( problemas_loan, ja_pagou_seguro, no_account_users,
+                      quant_ordem, min_saldo)
+
+lm(formula = problemas_loan ~ ., data = dadosLoan2) -> modelo
+summary(modelo)
+modelo
+
+plot(dadosLoan2)
+
+
+summary(dadosLoan2$mediana_saldo)[2]
 

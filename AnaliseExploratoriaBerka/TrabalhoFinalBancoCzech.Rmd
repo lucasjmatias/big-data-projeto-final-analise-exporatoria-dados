@@ -148,9 +148,12 @@ trans <- trans %>%
           debito = sum(ifelse(type == "debito", amount, 0)),
           trans_amount = sum(amount),
           saldo_medio_em_conta = mean(balance),
+          mediana_saldo = median(balance),
+          min_saldo = summary(balance)[1],
+          fq_saldo = summary(balance)[2],
           quant_trans = n()) %>%
         mutate(withdraw_rate = debito / credito) %>%
-        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, trans_amount)
+        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, mediana_saldo, min_saldo, fq_saldo, trans_amount)
 ```
 
 ##Disposição
@@ -158,8 +161,13 @@ A relação de disposição é útil para auxiliar nos relacionamentos. Como nos
 ```{r}
 unique(disp$type)
 disp <- disp %>%
-        dplyr::filter(type == "OWNER") %>%
-        select(disp_id, client_id, account_id)
+       # dplyr::filter(type == "OWNER") %>%
+        group_by(account_id) %>%
+        summarise(
+          client_id = first(client_id[type == "OWNER"]),
+          disp_id = first(disp_id[type == "OWNER"]),
+          no_account_users = n()
+        )
 ```
 
 
