@@ -1,0 +1,53 @@
+---
+title: "Kmeansdadosloan2"
+output: word_document
+---
+
+
+```{r}
+
+#achar padrões
+
+kmeans <- kmeans(dadosLoan2,3)
+
+
+#sumario
+kmeans
+
+#VEctor da soma dos quadrados, um componete por cluster
+kmeans$withinss
+
+#Distancia - Soma dos quadrados entres os clusters
+kmeans$betweenss
+
+
+#Numero de pontos para cada cluster
+kmeans$size
+
+#Verificar Padrões
+
+plot(dadosLoan2,col=kmeans$cluster,pch=15)
+points(kmeans$centers,col=1:8,pch=3)
+
+
+library(cluster)
+ library(fpc)
+ plotcluster(dadosLoan2,kmeans$cluster)
+points(kmeans$centers,col=1:8,pch=16)
+
+
+clusplot(dadosLoan2, kmeans$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+#Bem baixa a aplicação...
+
+
+
+
+
+```
+
+
+
+
+```
+
