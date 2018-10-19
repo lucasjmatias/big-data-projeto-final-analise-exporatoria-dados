@@ -227,15 +227,56 @@ dadosLoan$has_card = as.double(dadosLoan$has_card)
 
 
 dadosLoan2 <- dadosLoan %>%
-              select( problemas_loan, ja_pagou_seguro, no_account_users,
+              select( problemas_loan, ja_pagou_seguro, no_account_users, fq_saldo, media_transf,
                       quant_ordem, min_saldo)
 
 lm(formula = problemas_loan ~ ., data = dadosLoan2) -> modelo
 summary(modelo)
+
+
 modelo
 
-plot(dadosLoan2)
+plot(dadosLoan2, col = dadosLoan2$problemas_loan)
 
 
 summary(dadosLoan2$mediana_saldo)[2]
 
+cor(dadosLoan2)
+str(dadosLoan2[-1])
+str(dadosLoan2)
+dadosLoan2_std <- scale(dadosLoan2[-1])
+fit_km <- kmeans(dadosLoan2_std, 4, nstart = 50,iter.max = 15)
+fit_km
+fit_km$centers
+plot(dadosLoan2, col = fit_km$cluster)
+
+plot(fit_km$cluster)
+
+lm(formula = fit_km$cluster ~ dadosLoan2$ja_pagou_seguro) -> modelo2
+summary(modelo2)
+
+
+?kmeans
+
+
+scaled_data = as.matrix(dadosLoan2_std)
+
+
+set.seed(123)
+k.max <- 15
+data <- scaled_data
+wss <- sapply(1:k.max, 
+              function(k){kmeans(data, k, nstart=50,iter.max = 15 )$tot.withinss})
+wss
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+
+library(mclust)
+
+
+d_clust <- Mclust(as.matrix(scaled_data), G=1:15, 
+                  modelNames = mclust.options("emModelNames"))
+d_clust$BIC
+plot(d_clust)

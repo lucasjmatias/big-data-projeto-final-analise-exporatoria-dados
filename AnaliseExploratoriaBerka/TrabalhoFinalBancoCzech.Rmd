@@ -23,6 +23,8 @@ O objetivo do nosso trabalho é identificar quais fatores que podem impactar no 
 library(tidyverse)
 library(lubridate)
 library(fastDummies)
+library(cluster)
+library(fpc)
 
 ```
 
@@ -310,4 +312,67 @@ ggplot(dadosLoan, aes(has_card)) +
   geom_bar(position=position_dodge(), aes(fill=problemas_loan))
 ```
 
+#Estudo de cluster
+
+```{r}
+dadosLoanCluster <- dadosLoan %>%
+                      select( problemas_loan, ja_pagou_seguro, no_account_users,
+                              fq_saldo, media_transf, quant_ordem, min_saldo)
+
+dadosLoanCluster$problemas_loan = as.double(dadosLoan$problemas_loan)
+dadosLoanCluster$ja_pagou_seguro = as.double(dadosLoan$ja_pagou_seguro)
+
+lm(formula = problemas_loan ~ ., data = dadosLoanCluster) -> modelo
+summary(modelo)
+
+
+#achar a quantidade ideal de clusters
+dadosLoanCluster_std <- scale(dadosLoanCluster[-1])
+scaled_loan_data = as.matrix(dadosLoanCluster_std)
+
+
+set.seed(123)
+k.max <- 15
+data <- scaled_loan_data
+wss <- sapply(1:k.max, 
+              function(k){kmeans(data, k, nstart=50,iter.max = 15 )$tot.withinss})
+
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Número de clusters K",
+     ylab="Total clusters internos, soma de quadrados")
+
+
+#achar padrões
+
+kmeans <- kmeans(dadosLoanCluster,3)
+
+
+#sumario
+kmeans
+
+#VEctor da soma dos quadrados, um componete por cluster
+kmeans$withinss
+
+#Distancia - Soma dos quadrados entres os clusters
+kmeans$betweenss
+
+
+#Numero de pontos para cada cluster
+kmeans$size
+
+#Verificar Padrões
+
+plot(dadosLoanCluster,col=kmeans$cluster,pch=15)
+points(kmeans$centers,col=1:8,pch=3)
+
+
+plotcluster(dadosLoanCluster,kmeans$cluster)
+points(kmeans$centers,col=1:8,pch=16)
+
+
+clusplot(dadosLoanCluster, kmeans$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+
+```
 
