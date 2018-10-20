@@ -25,9 +25,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Objetivo
 O objetivo do nosso trabalho é identificar quais fatores que podem impactar no atraso e não pagamento das dívidas, a partir da análise dos dados do Banco Berka, definindo os clientes os tipos de clientes apartir da análise de cluster.
 
-# Carrega as bibliotecas
 ```{r include=FALSE}
-
+# Carrega as bibliotecas
 library(tidyverse)
 library(lubridate)
 library(fastDummies)
@@ -37,7 +36,8 @@ library(fpc)
 ```
 
 # Funções utilitárias
-Criamos a função prepararNA para simplificar o tratamento dos dados indisponíveis.
+Criamos a função prepararNA para simplificar o tratamento dos dados indisponíveis, bastando passar a tablea, nome da coluna a ser tratado e o valor a ser substituído caso encontre o valor NA, vai retornar a tabela com os dados substituídos.
+A função prepararData auxilia o preparo da data para esta análise, que segue o padrão de ano sem os 2 primeiros dígitos, mês e dia, retorna uma data válida para o R.
 ```{r}
 
 prepararNA <- function (tabela, nomeColuna, valorSeNA) {
@@ -85,7 +85,7 @@ client <- client %>%
 ```
 
 ## Conta
-O tratamento da relação conta incluí renomear as frequências com que a conta cria extratos para o correntista, pode ser mensal, semanal ou a cada transação, convertemos para fator, pois existem 3 fatores e selecionamos os campos importantes ao estudo
+O tratamento da relação conta inclui renomear as frequências com que a conta cria extratos para o correntista, pode ser mensal, semanal ou a cada transação, convertemos para fator, pois existem 3 fatores e selecionamos os campos importantes ao estudo.
 ```{r}
 #Tradução
 account$frequency <- gsub("POPLATEK MESICNE", "mensal", account$frequency)
@@ -98,7 +98,6 @@ account <- account %>%
           mutate(account_age = year(currentdate) - year(account_date)) %>%
           select(account_id, frequency, account_date, account_age)
 
-
 ```
 
 ## Distrito
@@ -107,6 +106,7 @@ O tratamento inicial da relação distrito começa na renomeação dos campos pa
 #Renomear campos para melhor entendimento
 colnames(district)[1] <- 'district_id'
 colnames(district)[2] <- 'district_name'
+colnames(district)[3] <- 'region'
 colnames(district)[11] <- 'avg_sal'
 colnames(district)[12] <- 'unemp_95'
 colnames(district)[13] <- 'unemp_96'
@@ -121,22 +121,22 @@ district$numb_enter = as.numeric(district$numb_enter)
 district = prepararNA(district, "unemp_95", 1)
 
 #Cálculo da taxa de desemprego e seleção de valores
-  district %>%
-  mutate(unemp_r = ifelse(unemp_95 == 0 | unemp_96 == 0, 1, unemp_96/unemp_95)) %>%
-  select(district_id, district_name, avg_sal, unemp_r, numb_enter) -> district
+district <- district %>%
+            mutate(unemp_r = 
+                     ifelse(unemp_95 == 0 | unemp_96 == 0, 1, unemp_96/unemp_95)) %>%
+            select(district_id, region, district_name, avg_sal, unemp_r, numb_enter)
 ```
 
 ## Cartão
-O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo. Preparamos então o tipo do cartão como fator , pois são de três tipos Junior, classic e gold.
+O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo.
 ```{r}
 colnames(card)[3] <- 'card_type'
 card <- card %>%
         select(card_id, disp_id, card_type) 
-#%>%     mutate(card_type = as.factor(card_type))
 ```
 
 ## Transação
-Na relação de transação, identificamos alguns valores como "VYBER" que não estão descritos na documentação e não pareceu ser pertinente aos nossos estudos, por isso foi filtrado. O tipo de transação foi traduzido para facilitar o entendimento. E foi feito um agrupamento pela conta para facilitar o relacionamento de 1 para 1 com os valores que nos interessam. 
+Na relação de transação, identificamos alguns valores como "VYBER" que não estão descritos na documentação e não pareceu ser pertinente aos nossos estudos, por isso foi filtrado. O tipo de transação foi traduzido para facilitar o entendimento. E foi feito um agrupamento pela conta para facilitar o relacionamento de 1 para 1 com os valores que nos interessam. Filtramos também os dados no ano de 1998 pra cima, para focar os estudos nos dados mais atuais.
 ```{r}
 unique(trans$type)
 
@@ -147,7 +147,6 @@ trans$date <- prepararData(trans$date)
 
 trans <- trans %>%
         dplyr::filter(type != "VYBER") %>%
-        dplyr::filter(year(date) > 97) %>%
         mutate(amount = as.numeric(amount)) %>%
         mutate(balance = as.numeric(balance)) %>%
         select(account_id, type, amount, balance) %>%
@@ -162,15 +161,15 @@ trans <- trans %>%
           fq_saldo = summary(balance)[2],
           quant_trans = n()) %>%
         mutate(withdraw_rate = debito / credito) %>%
-        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, mediana_saldo, min_saldo, fq_saldo, trans_amount)
+        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, 
+               mediana_saldo, min_saldo, fq_saldo, trans_amount)
 ```
 
 ## Disposição
-A relação de disposição é útil para auxiliar nos relacionamentos. Como nosso estudo centraliza no pagamento ou não de dívidas, sendo que somente os donos da conta conseguem pegar empréstimos, filtramos as disposições para os donos das contas que serão o alvo do estudo.
+A relação de disposição é útil para auxiliar nos relacionamentos. Como nosso estudo centraliza no pagamento ou não de dívidas, sendo que somente os donos da conta conseguem pegar empréstimos, agrupamos as disposições para os donos das contas que serão o alvo do estudo.
 ```{r}
 unique(disp$type)
 disp <- disp %>%
-       # dplyr::filter(type == "OWNER") %>%
         group_by(account_id) %>%
         summarise(
           client_id = first(client_id[type == "OWNER"]),
@@ -181,14 +180,13 @@ disp <- disp %>%
 
 
 ## Empréstimo
-No preparo da relação de empréstimo, traduzimos os status para os significados reais, também preparamos a taxa de pagamento e selecionamos os campos úteis ao estudo.
+No preparo da relação de empréstimo, traduzimos os status para os significados reais, também preparamos a taxa de pagamento.
 ```{r}
 unique(loan$status)
 loan$status <- gsub("A", "finalizado", loan$status)
 loan$status <- gsub("B", "nao pago", loan$status)
 loan$status <- gsub("C", "vigente", loan$status)
 loan$status <- gsub("D", "em debito", loan$status)
-#loan$status <- as.factor(loan$status)
 loan$payments = as.numeric(loan$payments)
 loan$amount = as.numeric(loan$amount)
 
@@ -196,11 +194,10 @@ loan$loan_date = prepararData(loan$date)
 
 loan <- loan %>%
         mutate(loan_year = year(loan_date)) %>%
-        mutate(loan_end_year = loan_year + (duration / 12)) %>%
-        dplyr::filter(loan_end_year > 97) %>%
         mutate(loan_age = year(currentdate) - loan_year) %>%
         mutate(payments_rate = payments / amount) %>%
-        select(loan_id, account_id, amount, duration, status, payments_rate, loan_date, loan_age)
+        select(loan_id, account_id, amount, duration, status,
+               payments_rate, loan_date, loan_age)
 
 colnames(loan)[3] <- 'loan_amount'
 colnames(loan)[4] <- 'loan_duration'
@@ -234,7 +231,7 @@ order <- order %>%
 ```
 
 # União dos dados
-Criamos um dataset "dados" copiando as variaveís que precisamos para inciarmos as nossas análises
+Criamos um dataset "dados" copiando as variaveís que precisamos para inciarmos as nossas análises.
 
 ## Preparar união
 ```{r}
@@ -252,6 +249,7 @@ dados <- client %>%
 ```
 
 ## Preparar NAs
+Utilizando nossa função, preparamos os dados que possuem NA para que não interfiram na análise de forma negativa.
 ```{r}
 
 dados <- dados %>%
@@ -263,8 +261,6 @@ dados <- dados %>%
          prepararNA("loan_amount", 0) %>%
          prepararNA("loan_duration", 0) %>%
          prepararNA("loan_status", "nenhum")
-
-
 ```
 
 ## Preparar factors
@@ -274,35 +270,42 @@ dados$loan_status = as.factor(dados$loan_status)
 ```
 
 ## Preparar dados de empréstimo
+Fitramos os dados que possuem algum empréstimo válido. Logo após criamos uma nova variável com o nome de "problemas_loan", cujo objetivo é informar se o cliente possui algum problema de pagamento.
 ```{r}
 dadosLoan <- dados %>%
              dplyr::filter(loan_status != "nenhum") %>%
-             mutate(problemas_loan = if_else(loan_status == "em debito" | loan_status == "nao pago", TRUE, FALSE))
+             mutate(problemas_loan = 
+                      if_else(loan_status == "em debito" | loan_status == "nao pago",
+                    TRUE, FALSE))
 dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
 
 ```
 
 # Estudo dos dados
 ## Empréstimos
-Observamos que contratos mais novos apresentam menos problemas com pagamentos
+Observamos que contratos mais novos apresentam menos problemas com pagamentos, mas isso não significam que não possam vir a apresentar problemas no futuro.
 ```{r}
-anoPorProblemas = dadosLoan %>%
-                  mutate(loan_year = year(loan_date)) %>%
-                  group_by(loan_year) %>%
-                  summarise(
-                    count = n(),
-                    problemas = sum(ifelse(problemas_loan == TRUE, 1, 0))
-                  ) %>%
-                  mutate(taxa_problema = problemas / count)
+problemasPorAno <- dadosLoan %>% 
+  mutate(ano = year(loan_date)) %>%
+  select(ano, problemas_loan) %>%
+  group_by(ano, problemas_loan) %>%
+  summarise(
+    count = n()
+  ) %>%
+  mutate(perc =  count/sum(count)) %>%
+  dplyr::filter(problemas_loan == TRUE)
 
-ggplot(anoPorProblemas, aes(x = loan_year, y = count)) +
-  geom_bar(stat = "identity", position=position_dodge(), aes(fill=taxa_problema))
+ggplot(problemasPorAno, aes(x = ano, y = perc*100), group = 1) +
+  geom_line(color="red") +
+  geom_point(color="red") + 
+  labs(x = "Ano", y = "Porcentagem de problemas com empréstimo") +
+  expand_limits(y=c(0, 100))
+  
 
 ```
 
 
 E também observamos maiores problemas nos empréstimos quando a medida que o valor é maior
-
 ```{r}
 emprestimo<-ggplot(dados,aes(x=loan_status,y=loan_amount))
 emprestimo<-emprestimo+geom_boxplot()
@@ -311,16 +314,51 @@ emprestimo
 ```
 
 
-Identificamos também que pessoas que possuem cartões tem menores chances de ter problemas com os empréstimos
+## Cartões
+Identificamos também que pessoas que possuem cartões tem menores chances de ter problemas com os empréstimos. O valor P do qui-quadrado confirma a relação.
 
 ```{r}
 dadosLoan <- dadosLoan %>%
   mutate(has_card = ifelse(card_type=="nenhum", FALSE, TRUE))
 
 chisq.test(table(dadosLoan$has_card, dadosLoan$problemas_loan))
-ggplot(dadosLoan, aes(has_card)) +
-  geom_bar(position=position_dodge(), aes(fill=problemas_loan))
+
+analiseCartao <- dadosLoan %>% 
+  select(card_type, problemas_loan) %>%
+  group_by(card_type, problemas_loan) %>%
+  summarise(
+    count = n()
+  ) %>%
+  mutate(perc =  count/sum(count))
+
+
+ggplot(analiseCartao, aes(x = factor(card_type), y = perc*100, fill = factor(problemas_loan))) +
+  geom_bar(stat="identity", width = 0.7) +
+  labs(x = "Tipo de cartão", y = "Porcentagem", fill = "Problema com pagamento") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+
+
+## Distritos
+Analisando os problemas com empréstimos por distrito, percebemos que clientes da região "North Bohemia" tem baixo índice de inadimplência. e "North Moravia"" tem o maior indíce de inadimplência.
+```{r}
+distritoAnalise <- dadosLoan %>% 
+                   select(region, problemas_loan) %>%
+                   group_by(region, problemas_loan) %>%
+                   summarise(
+                     count = n()
+                   ) %>%
+                   mutate(perc =  count/sum(count))
+
+
+ggplot(distritoAnalise, aes(x = factor(region), y = perc*100, fill = factor(problemas_loan))) +
+  geom_bar(stat="identity", width = 0.7) +
+  labs(x = "Região", y = "Porcentagem", fill = "Problema com pagamento") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
 
 # Estudo de cluster
 
@@ -417,6 +455,8 @@ summary(regres)
 
 ```
 
-
+# Conclusão
+Os fatores que podem levar um cliente a ser um bom ou mal pagador são diversos, principalmente quando as informações que a base de dados tem sobre o cliente são limitadas, mas podemos identificar alguns sinais de que o cliente possa ser um mal pagador, ou possa parar de pagar uma dívida já contratada. Uma variável que consideramos bem forte para este sinal é a de saldo mínimo em conta, percebemos que pessoas com problemas de pagamento costumam atingir os menores saldos em conta, pode parecer uma informação óbvia, mas também é algo que nos permite identificar clientes que logo se tornarão mal pagadores e permitir que o banco crie estratégias para ajudar estes clientes.
+Por fim, após um análise de diversas variáveis em torno de clientes que possuem empréstimos, foi criado o modelo e clusters.
 
 

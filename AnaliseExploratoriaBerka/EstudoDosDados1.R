@@ -278,3 +278,90 @@ plot(1:k.max, wss,
 plot(dadosLoan2, col = kmeans$cluster)
 
 
+
+lm(formula = problemas_loan ~ ., data = dadosLoan2) -> modelo
+
+
+plot(dadosLoan2$problemas_loan ~ dadosLoan2, col = region)
+
+ggplot(dadosLoan, aes(x = region)) + geom_bar(stat = "bin", position=position_dodge(), aes(fill=problemas_loan))
+
+distritoAnalise <- dadosLoan %>% 
+                   select(region, problemas_loan) %>%
+                   group_by(region, problemas_loan) %>%
+                   summarise(
+                     count = n()
+                   ) %>%
+                   mutate(perc =  count/sum(count))
+
+
+ggplot(distritoAnalise, aes(x = factor(region), y = perc*100, fill = factor(problemas_loan))) +
+  geom_bar(stat="identity", width = 0.7) +
+  labs(x = "Região", y = "percent", fill = "Problema com pagamento") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  
+dadosLoan$problemas_loan = as.double(dadosLoan$problemas_loan)
+ggplot(dadosLoan, aes(region)) + geom_bar(aes(fill=problemas_loan)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+
+analiseCartao <- dadosLoan %>% 
+  select(card_type, problemas_loan) %>%
+  group_by(card_type, problemas_loan) %>%
+  summarise(
+    count = n()
+  ) %>%
+  mutate(perc =  count/sum(count))
+
+
+ggplot(analiseCartao, aes(x = factor(card_type), y = perc*100, fill = factor(problemas_loan))) +
+  geom_bar(stat="identity", width = 0.7) +
+  labs(x = "Região", y = "Porcentagem", fill = "Problema com pagamento") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+
+
+analiseDivida <- dadosLoan %>% 
+  mutate(ano = year(loan_date)) %>%
+  select(ano, problemas_loan) %>%
+  group_by(ano, problemas_loan) %>%
+  summarise(
+    count = n()
+  ) %>%
+  mutate(perc =  count/sum(count))
+
+
+ggplot(analiseDivida, aes(x = factor(ano), y = perc*100, fill = factor(problemas_loan))) +
+  geom_bar(stat="identity", width = 0.7) +
+  labs(x = "Ano", y = "Porcentagem", fill = "Problema com pagamento") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+ggplot(analiseDivida, aes(x = factor(ano), y = perc*100), group = 1) +
+  geom_line() +
+  labs(x = "Ano", y = "Porcentagem", fill = "Problema com pagamento") +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+analiseDivida <- dadosLoan %>% 
+  mutate(ano = year(loan_date)) %>%
+  select(ano, problemas_loan) %>%
+  group_by(ano, problemas_loan) %>%
+  summarise(
+    count = n()
+  ) %>%
+  mutate(perc =  count/sum(count)) %>%
+  dplyr::filter(problemas_loan == TRUE)
+
+ggplot(analiseDivida, aes(x = ano, y = perc*100), group = 1) +
+  geom_line(color="red") +
+  geom_point(color="red") + 
+  labs(x = "Ano", y = "Porcentagem de problemas com empréstimo") +
+  expand_limits(y=c(0, 100))
+  
