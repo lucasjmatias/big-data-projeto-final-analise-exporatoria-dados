@@ -1,8 +1,12 @@
 ---
 title: "Exploração de dados - Banco Czech"
+Componentes do Grupo: Luiz Cesar Costa Raymundo, Lucas de Jesus. Matias e Bruno
+
 output:
-    pdf_document:
-      toc_depth: 2
+  word_document:
+    toc_depth: '2'
+  pdf_document:
+    toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -15,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 \newpage
 
 # Objetivo
-O objetivo do nosso trabalho é identificar quais fatores que podem impactar no atraso e não pagamento das dívidas.
+O objetivo do nosso trabalho é identificar quais fatores que podem impactar no atraso e não pagamento das dívidas, a partir da análise dos dados do Banco Berka, definindo os clientes os tipos de clientes apartir da análise de cluster.
 
 ```{r include=FALSE}
 
@@ -23,6 +27,8 @@ O objetivo do nosso trabalho é identificar quais fatores que podem impactar no 
 library(tidyverse)
 library(lubridate)
 library(fastDummies)
+library(cluster)
+library(fpc)
 
 ```
 
@@ -60,7 +66,7 @@ read.csv2("./dados/order.asc", stringsAsFactors = FALSE) -> order
 #Tratamento dos dados
 
 ##Cliente
-O tratamento inicial da relação cliente envolve a separação do campo data de nascimento e gênero, que será tratado por M e F. E a transformação do campo birth_number em uma data válida para o R. Para isso transformamos o birth_number em um campo númerico, obtemos 4 dígitos da 3ª à 4ª posição, sendo este valor superior a 50 consideramos como feminino, pois o mês de nascimento das mulheres está com uma soma de 50 unidades. Subtraímos 5000 do mês das mulheres, pois como um único campo numérico, implica em diminuir 50 do campo mensal. Após isso concatenamos o número 19 ao começo do birth_number, no intuíto de deixar melhor preparado para a formatação da data, que ocorre logo em seguida. Logo após, calculamos a idade e selecionamos apenas os campos que nos serão úteis para o nosso estudo.
+O tratamento inicial da relação cliente envolve a separação do campo data de nascimento e gênero, que será tratado por M e F. E a transformação do campo birth_number em uma data válida para o R. Para isso transformamos o birth_number em um campo númerico, obtemos 4 dígitos da 3ª à 4ª posição, sendo este valor superior a 50 consideramos como feminino, pois o mês de nascimento das mulheres está com uma soma de 50 unidades. Subtraímos 5000 do mês das mulheres, pois como um único campo numérico, implica em diminuir 50 do campo mensal. Após isso concatenamos o número 19 ao começo do birth_number, no intuito de deixar melhor preparado para a formatação da data, que ocorre logo em seguida. Logo após, calculamos a idade e selecionamos apenas os campos que nos serão úteis para o nosso estudo.
 samos a data de referência como 01/01/1998, devido a referência dos dados, para calcular a idade dos clientes.
 ```{r}
 currentdate <- as.Date("1998/01/01", format="%Y/%m/%d")
@@ -76,7 +82,7 @@ client <- client %>%
 ```
 
 ##Conta
-O tratamento da conta incluí renomear as frequências da conta e seleção dos campos importantes ao estudo.
+O tratamento da relação conta incluí renomear as frequências com que a conta cria extratos para o correntista, pode ser mensal, semanal ou a cada transação, convertemos para fator, pois existem 3 fatores e selecionamos os campos importantes ao estudo
 ```{r}
 #Tradução
 account$frequency <- gsub("POPLATEK MESICNE", "mensal", account$frequency)
@@ -93,7 +99,7 @@ account <- account %>%
 ```
 
 ##Distrito
-O tratamento inicial da relação distrito começa na renomeação dos campos para melhor entendimento. Conversão dos campos de unemp_95 e unemp_96 para numéricos. Limpeza dos valores NA. Cálculo da taxa de desemprego entre os anos 95 e 96. E seleção dos valores que serão usados neste estudo.
+O tratamento inicial da relação distrito começa na renomeação dos campos para melhor entendimento, pois as colunas estão codificadas. Conversão dos campos de unemp_95 e unemp_96 para numéricos. Limpeza dos valores NA. Cálculo da taxa de desemprego entre os anos 95 e 96. E seleção dos valores que serão usados neste estudo.
 ```{r}
 #Renomear campos para melhor entendimento
 colnames(district)[1] <- 'district_id'
@@ -118,7 +124,7 @@ district = prepararNA(district, "unemp_95", 1)
 ```
 
 ##Cartão
-O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo. Preparamos então o tipo do cartão como categórica.
+O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo. Preparamos então o tipo do cartão como fator , pois são de três tipos Junior, classic e gold.
 ```{r}
 colnames(card)[3] <- 'card_type'
 card <- card %>%
@@ -148,9 +154,12 @@ trans <- trans %>%
           debito = sum(ifelse(type == "debito", amount, 0)),
           trans_amount = sum(amount),
           saldo_medio_em_conta = mean(balance),
+          mediana_saldo = median(balance),
+          min_saldo = summary(balance)[1],
+          fq_saldo = summary(balance)[2],
           quant_trans = n()) %>%
         mutate(withdraw_rate = debito / credito) %>%
-        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, trans_amount)
+        select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, mediana_saldo, min_saldo, fq_saldo, trans_amount)
 ```
 
 ##Disposição
@@ -158,8 +167,13 @@ A relação de disposição é útil para auxiliar nos relacionamentos. Como nos
 ```{r}
 unique(disp$type)
 disp <- disp %>%
-        dplyr::filter(type == "OWNER") %>%
-        select(disp_id, client_id, account_id)
+       # dplyr::filter(type == "OWNER") %>%
+        group_by(account_id) %>%
+        summarise(
+          client_id = first(client_id[type == "OWNER"]),
+          disp_id = first(disp_id[type == "OWNER"]),
+          no_account_users = n()
+        )
 ```
 
 
@@ -214,7 +228,9 @@ order <- order %>%
          )
 ```
 
-#União dos dados
+##União dos dados
+
+Criamos um dataset "dados" copiando as variaveís que precisamos para inciarmos as nossas análises
 
 ##Preparar união
 ```{r}
@@ -262,8 +278,10 @@ dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
 
 ```
 
-#Estudo dos dados
-##Empréstimos
+##Estudo dos dados
+
+#Empréstimos
+
 Observamos que contratos mais novos apresentam menos problemas com pagamentos
 ```{r}
 anoPorProblemas = dadosLoan %>%
@@ -284,9 +302,9 @@ ggplot(anoPorProblemas, aes(x = loan_year, y = count)) +
 E também observamos maiores problemas nos empréstimos quando a medida que o valor é maior
 
 ```{r}
-boxplot(loan_amount~problemas_loan, data = dadosLoan)
-lm(dadosLoan, formula = loan_amount ~ problemas_loan) -> modelo
-summary(modelo)
+emprestimo<-ggplot(dados,aes(x=loan_status,y=loan_amount))
+emprestimo<-emprestimo+geom_boxplot()
+emprestimo
 
 ```
 
@@ -301,5 +319,92 @@ chisq.test(table(dadosLoan$has_card, dadosLoan$problemas_loan))
 ggplot(dadosLoan, aes(has_card)) +
   geom_bar(position=position_dodge(), aes(fill=problemas_loan))
 ```
+
+#Estudo de cluster
+
+Utilizaremos a metolodologia de clusters k-means, primeiro vamos definir o quantitativo de clusters, depois vamos definir o risco dos consumidores se é alto, médio ou baixo risco.
+
+```{r}
+dadosLoanCluster <- dadosLoan %>%
+                      select( problemas_loan, ja_pagou_seguro, no_account_users,
+                              fq_saldo, media_transf, quant_ordem, min_saldo)
+
+dadosLoanCluster$problemas_loan = as.double(dadosLoan$problemas_loan)
+dadosLoanCluster$ja_pagou_seguro = as.double(dadosLoan$ja_pagou_seguro)
+
+lm(formula = problemas_loan ~ ., data = dadosLoanCluster) -> modelo
+summary(modelo)
+
+
+#achar a quantidade ideal de clusters
+dadosLoanCluster_std <- scale(dadosLoanCluster[-1])
+scaled_loan_data = as.matrix(dadosLoanCluster_std)
+
+
+set.seed(123)
+k.max <- 15
+data <- scaled_loan_data
+wss <- sapply(1:k.max, 
+              function(k){kmeans(data, k, nstart=50,iter.max = 15 )$tot.withinss})
+
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Número de clusters K",
+     ylab="Total clusters internos, soma de quadrados")
+
+
+#achar padrões
+
+kmeans <- kmeans(dadosLoanCluster,3)
+
+
+#sumario
+kmeans
+
+#VEctor da soma dos quadrados, um componete por cluster
+kmeans$withinss
+
+#Distancia - Soma dos quadrados entres os clusters
+kmeans$betweenss
+
+
+#Numero de pontos para cada cluster
+kmeans$size
+
+#Verificar Padrões
+
+plot(dadosLoanCluster,col=kmeans$cluster,pch=15)
+points(kmeans$centers,col=1:8,pch=3)
+
+
+plotcluster(dadosLoanCluster,kmeans$cluster)
+points(kmeans$centers,col=1:8,pch=16)
+
+
+clusplot(dadosLoanCluster, kmeans$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+
+```
+# Ao analisar o gráfico "tabela", podemos perceber a formação de cluster apenas entre FQ_saldo e Media_transf e quant_ordem e Min_saldo. Indicando que quanto maior o saldo maior, maior a media de transferencias e quantitativo de de ordem.
+
+
+#Analise de regressão (log-log) para veririfcar se há correlação entre idade e taxa de desemprego.
+
+```{r}
+
+dados["logidade"]<-log(dados$age)
+dados["logtaxadesemprego"]<-log(dados$unemp_r)
+
+regres<-lm(logidade~logtaxadesemprego, data=dados)
+
+plot (dados$logidade, dados$logtaxadesemprego)
+
+abline(regres)
+
+summary(regres)
+
+```
+
+
 
 
