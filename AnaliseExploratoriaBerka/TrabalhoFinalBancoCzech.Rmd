@@ -70,7 +70,7 @@ read.csv2("./dados/order.asc", stringsAsFactors = FALSE) -> order
 
 ## Cliente
 O tratamento inicial da relação cliente envolve a separação do campo data de nascimento e gênero, que será tratado por M e F. E a transformação do campo birth_number em uma data válida para o R. Para isso transformamos o birth_number em um campo númerico, obtemos 4 dígitos da 3ª à 4ª posição, sendo este valor superior a 50 consideramos como feminino, pois o mês de nascimento das mulheres está com uma soma de 50 unidades. Subtraímos 5000 do mês das mulheres, pois como um único campo numérico, implica em diminuir 50 do campo mensal. Após isso concatenamos o número 19 ao começo do birth_number, no intuito de deixar melhor preparado para a formatação da data, que ocorre logo em seguida. Logo após, calculamos a idade e selecionamos apenas os campos que nos serão úteis para o nosso estudo.
-samos a data de referência como 01/01/1998, devido a referência dos dados, para calcular a idade dos clientes.
+Utilizamos a data de referência como 01/01/1998, devido a referência dos dados, para calcular a idade dos clientes.
 ```{r}
 currentdate <- as.Date("1998/01/01", format="%Y/%m/%d")
 client <- client %>%
@@ -324,7 +324,8 @@ ggplot(dadosLoan, aes(has_card)) +
 
 # Estudo de cluster
 
-Utilizaremos a metolodologia de clusters k-means, primeiro vamos definir o quantitativo de clusters, depois vamos definir o risco dos consumidores se é alto, médio ou baixo risco.
+## Modelo
+Após um estudo de regressão linear múltipla, chegamos a um modelo que explica 50% dos problemas com dívidas no R quadrado. 
 
 ```{r}
 dadosLoanCluster <- dadosLoan %>%
@@ -336,12 +337,16 @@ dadosLoanCluster$ja_pagou_seguro = as.double(dadosLoan$ja_pagou_seguro)
 
 lm(formula = problemas_loan ~ ., data = dadosLoanCluster) -> modelo
 summary(modelo)
+```
 
+
+## Número de clusters
+Utilizaremos a metolodologia de clusters k-means, primeiro vamos definir o quantitativo de clusters. Com análise no gráfico utilizando o Elbow Method, consideramos o uso de 3 ou 4 clusters interessante, pois é onde que começa a se perder o benefício de utilização de mais clusters. Decidimos por 3 para classificarmos os consumidores em alto, médio e baixo risco.
+```{r}
 
 #achar a quantidade ideal de clusters
 dadosLoanCluster_std <- scale(dadosLoanCluster[-1])
 scaled_loan_data = as.matrix(dadosLoanCluster_std)
-
 
 set.seed(123)
 k.max <- 15
@@ -353,8 +358,12 @@ plot(1:k.max, wss,
      type="b", pch = 19, frame = FALSE, 
      xlab="Número de clusters K",
      ylab="Total clusters internos, soma de quadrados")
+```
 
 
+## Criação dos clusters
+Utilizamos o k-means para criar os clusters.
+```{r}
 #achar padrões
 
 kmeans <- kmeans(dadosLoanCluster,3)
@@ -384,13 +393,14 @@ points(kmeans$centers,col=1:8,pch=16)
 
 
 clusplot(dadosLoanCluster, kmeans$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
-
-
 ```
-# Ao analisar o gráfico "tabela", podemos perceber a formação de cluster apenas entre FQ_saldo e Media_transf e quant_ordem e Min_saldo. Indicando que quanto maior o saldo maior, maior a media de transferencias e quantitativo de de ordem.
 
 
-#Analise de regressão (log-log) para veririfcar se há correlação entre idade e taxa de desemprego.
+Ao analisar o gráfico "tabela", podemos perceber a formação de cluster apenas entre FQ_saldo e Media_transf e quant_ordem e Min_saldo. Indicando que quanto maior o saldo maior, maior a media de transferencias e quantitativo de de ordem.
+
+
+## Análise de regressão
+A Análise de regressão (log-log) para verificar se há correlação entre idade e taxa de desemprego.
 
 ```{r}
 
