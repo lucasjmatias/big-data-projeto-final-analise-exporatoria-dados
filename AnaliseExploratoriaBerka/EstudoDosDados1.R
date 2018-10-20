@@ -233,12 +233,11 @@ dadosLoan2 <- dadosLoan %>%
 lm(formula = problemas_loan ~ ., data = dadosLoan2) -> modelo
 summary(modelo)
 
-
 modelo
 
 plot(dadosLoan2, col = dadosLoan2$problemas_loan)
 
-
+boxplot(dadosLoan2$fq_saldo)
 summary(dadosLoan2$mediana_saldo)[2]
 
 cor(dadosLoan2)
@@ -273,10 +272,9 @@ plot(1:k.max, wss,
      xlab="Number of clusters K",
      ylab="Total within-clusters sum of squares")
 
-library(mclust)
 
 
-d_clust <- Mclust(as.matrix(scaled_data), G=1:15, 
-                  modelNames = mclust.options("emModelNames"))
-d_clust$BIC
-plot(d_clust)
+
+plot(dadosLoan2, col = kmeans$cluster)
+
+

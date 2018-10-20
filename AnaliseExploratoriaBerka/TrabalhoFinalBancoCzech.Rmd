@@ -1,5 +1,9 @@
 ---
-title: "Exploração de dados - Banco Czech"
+title: \Huge{Exploração de dados - Banco Czech}
+author:
+- \LARGE{Bruno}
+- \LARGE{Lucas de Jesus Matias}
+- \LARGE{Luiz Cesar Costa Raymundo}
 output:
     pdf_document:
       toc_depth: 2
@@ -8,7 +12,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-#install.packages("fastDummies")
 ```
 \newpage
 \tableofcontents
@@ -17,9 +20,9 @@ knitr::opts_chunk$set(echo = TRUE)
 # Objetivo
 O objetivo do nosso trabalho é identificar quais fatores que podem impactar no atraso e não pagamento das dívidas.
 
+# Carrega as bibliotecas
 ```{r include=FALSE}
 
-#Carrega as bibliotecas
 library(tidyverse)
 library(lubridate)
 library(fastDummies)
@@ -44,9 +47,8 @@ prepararData <- function (vetorDataYYMMDD) {
 
 ```
 
-#Carga dos dados
+# Carga dos dados
 Utilizamos a função read.csv2 que nos permite carregar os dados disponíveis em texto, no formato CSV.
-
 ```{r}
 read.csv2("./dados/account.asc", stringsAsFactors = FALSE) -> account
 read.csv2("./dados/client.asc", stringsAsFactors = FALSE) -> client
@@ -59,9 +61,9 @@ read.csv2("./dados/order.asc", stringsAsFactors = FALSE) -> order
 
 ```
 
-#Tratamento dos dados
+# Tratamento dos dados
 
-##Cliente
+## Cliente
 O tratamento inicial da relação cliente envolve a separação do campo data de nascimento e gênero, que será tratado por M e F. E a transformação do campo birth_number em uma data válida para o R. Para isso transformamos o birth_number em um campo númerico, obtemos 4 dígitos da 3ª à 4ª posição, sendo este valor superior a 50 consideramos como feminino, pois o mês de nascimento das mulheres está com uma soma de 50 unidades. Subtraímos 5000 do mês das mulheres, pois como um único campo numérico, implica em diminuir 50 do campo mensal. Após isso concatenamos o número 19 ao começo do birth_number, no intuíto de deixar melhor preparado para a formatação da data, que ocorre logo em seguida. Logo após, calculamos a idade e selecionamos apenas os campos que nos serão úteis para o nosso estudo.
 samos a data de referência como 01/01/1998, devido a referência dos dados, para calcular a idade dos clientes.
 ```{r}
@@ -77,7 +79,7 @@ client <- client %>%
 
 ```
 
-##Conta
+## Conta
 O tratamento da conta incluí renomear as frequências da conta e seleção dos campos importantes ao estudo.
 ```{r}
 #Tradução
@@ -94,7 +96,7 @@ account <- account %>%
 
 ```
 
-##Distrito
+## Distrito
 O tratamento inicial da relação distrito começa na renomeação dos campos para melhor entendimento. Conversão dos campos de unemp_95 e unemp_96 para numéricos. Limpeza dos valores NA. Cálculo da taxa de desemprego entre os anos 95 e 96. E seleção dos valores que serão usados neste estudo.
 ```{r}
 #Renomear campos para melhor entendimento
@@ -119,7 +121,7 @@ district = prepararNA(district, "unemp_95", 1)
   select(district_id, district_name, avg_sal, unemp_r, numb_enter) -> district
 ```
 
-##Cartão
+## Cartão
 O tratamento inicial da relação cartão seleciona os campos que serão úteis para este estudo. Preparamos então o tipo do cartão como categórica.
 ```{r}
 colnames(card)[3] <- 'card_type'
@@ -128,7 +130,7 @@ card <- card %>%
 #%>%     mutate(card_type = as.factor(card_type))
 ```
 
-##Transação
+## Transação
 Na relação de transação, identificamos alguns valores como "VYBER" que não estão descritos na documentação e não pareceu ser pertinente aos nossos estudos, por isso foi filtrado. O tipo de transação foi traduzido para facilitar o entendimento. E foi feito um agrupamento pela conta para facilitar o relacionamento de 1 para 1 com os valores que nos interessam. 
 ```{r}
 unique(trans$type)
@@ -158,7 +160,7 @@ trans <- trans %>%
         select(account_id, withdraw_rate, quant_trans, saldo_medio_em_conta, mediana_saldo, min_saldo, fq_saldo, trans_amount)
 ```
 
-##Disposição
+## Disposição
 A relação de disposição é útil para auxiliar nos relacionamentos. Como nosso estudo centraliza no pagamento ou não de dívidas, sendo que somente os donos da conta conseguem pegar empréstimos, filtramos as disposições para os donos das contas que serão o alvo do estudo.
 ```{r}
 unique(disp$type)
@@ -173,7 +175,7 @@ disp <- disp %>%
 ```
 
 
-##Empréstimo
+## Empréstimo
 No preparo da relação de empréstimo, traduzimos os status para os significados reais, também preparamos a taxa de pagamento e selecionamos os campos úteis ao estudo.
 ```{r}
 unique(loan$status)
@@ -188,8 +190,10 @@ loan$amount = as.numeric(loan$amount)
 loan$loan_date = prepararData(loan$date)
 
 loan <- loan %>%
-        dplyr::filter(year(loan_date) > 97) %>%
-        mutate(loan_age = year(currentdate) - year(loan_date)) %>%
+        mutate(loan_year = year(loan_date)) %>%
+        mutate(loan_end_year = loan_year + (duration / 12)) %>%
+        dplyr::filter(loan_end_year > 97) %>%
+        mutate(loan_age = year(currentdate) - loan_year) %>%
         mutate(payments_rate = payments / amount) %>%
         select(loan_id, account_id, amount, duration, status, payments_rate, loan_date, loan_age)
 
@@ -201,7 +205,7 @@ colnames(loan)[6] <- 'loan_payment_rate'
 
 ```
 
-##Ordem de Pagamento
+## Ordem de Pagamento
 No preparo da ordem de pagamento, o texto do tipo de ordem é traduzido, ignoramos os que não possuem nenhum tipo especificado e selecionamos os dados importantes a este estudo através do agrupamento pela conta.
 ```{r}
 unique(order$k_symbol)
@@ -224,9 +228,9 @@ order <- order %>%
          )
 ```
 
-#União dos dados
+# União dos dados
 
-##Preparar união
+## Preparar união
 ```{r}
 
 
@@ -241,7 +245,7 @@ dados <- client %>%
 
 ```
 
-##Preparar NAs
+## Preparar NAs
 ```{r}
 
 dados <- dados %>%
@@ -257,13 +261,13 @@ dados <- dados %>%
 
 ```
 
-##Preparar factors
+## Preparar factors
 ```{r}
 dados$card_type = as.factor(dados$card_type)
 dados$loan_status = as.factor(dados$loan_status)
 ```
 
-##Preparar dados de empréstimo
+## Preparar dados de empréstimo
 ```{r}
 dadosLoan <- dados %>%
              dplyr::filter(loan_status != "nenhum") %>%
@@ -272,8 +276,8 @@ dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
 
 ```
 
-#Estudo dos dados
-##Empréstimos
+# Estudo dos dados
+## Empréstimos
 Observamos que contratos mais novos apresentam menos problemas com pagamentos
 ```{r}
 anoPorProblemas = dadosLoan %>%
@@ -312,7 +316,7 @@ ggplot(dadosLoan, aes(has_card)) +
   geom_bar(position=position_dodge(), aes(fill=problemas_loan))
 ```
 
-#Estudo de cluster
+# Estudo de cluster
 
 ```{r}
 dadosLoanCluster <- dadosLoan %>%

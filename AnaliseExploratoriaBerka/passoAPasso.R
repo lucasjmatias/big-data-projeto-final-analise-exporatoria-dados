@@ -1,10 +1,15 @@
 #install.packages("RODBC")
 #install.packages("magrittr")
 #install.packages("cluster")
+install.packages("fpc")
+
+mclust 
 
 library(RODBC)
 library(magrittr)
 library(cluster)
+
+
 
 read.csv2("./dados/analise_cluster.csv", stringsAsFactors = FALSE) -> rawdata
 
