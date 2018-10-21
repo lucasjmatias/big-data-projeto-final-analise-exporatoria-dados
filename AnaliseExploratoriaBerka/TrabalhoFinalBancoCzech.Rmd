@@ -361,6 +361,24 @@ ggplot(distritoAnalise,
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
+## Idade e taxa de desemprego
+A Análise de regressão (log-log) para verificar se há correlação entre idade e taxa de desemprego.
+
+```{r}
+
+dados["logidade"]<-log(dados$age)
+dados["logtaxadesemprego"]<-log(dados$unemp_r)
+
+regres<-lm(logidade~logtaxadesemprego, data=dados)
+
+plot (dados$logidade, dados$logtaxadesemprego)
+
+abline(regres)
+
+summary(regres)
+
+```
+
 
 # Estudo de cluster
 
@@ -438,24 +456,6 @@ clusplot(dadosLoanCluster, kmeans$cluster, color=TRUE, shade=TRUE, labels=2, lin
 
 Ao analisar o gráfico "tabela", podemos perceber a formação de cluster apenas entre FQ_saldo e Media_transf e quant_ordem e Min_saldo. Indicando que quanto maior o saldo maior, maior a media de transferencias e quantitativo de de ordem.
 
-
-## Análise de regressão
-A Análise de regressão (log-log) para verificar se há correlação entre idade e taxa de desemprego.
-
-```{r}
-
-dados["logidade"]<-log(dados$age)
-dados["logtaxadesemprego"]<-log(dados$unemp_r)
-
-regres<-lm(logidade~logtaxadesemprego, data=dados)
-
-plot (dados$logidade, dados$logtaxadesemprego)
-
-abline(regres)
-
-summary(regres)
-
-```
 
 # Conclusão
 Os fatores que podem levar um cliente a ser um bom ou mal pagador são diversos, principalmente quando as informações que a base de dados tem sobre o cliente são limitadas, mas podemos identificar alguns sinais de que o cliente possa ser um mal pagador, ou possa parar de pagar uma dívida já contratada. Uma variável que consideramos bem forte para este sinal é a de saldo mínimo em conta, percebemos que pessoas com problemas de pagamento costumam atingir os menores saldos em conta, pode parecer uma informação óbvia, mas também é algo que nos permite identificar clientes que logo se tornarão mal pagadores e permitir que o banco crie estratégias para ajudar estes clientes.
