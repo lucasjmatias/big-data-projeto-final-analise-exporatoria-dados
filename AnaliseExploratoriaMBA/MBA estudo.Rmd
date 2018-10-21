@@ -1,15 +1,29 @@
 ---
-title: "Avaliação dados MBA"
+title: \Huge{Exploração de dados - MBA}
+author:
+- \LARGE{Bruno}
+- \LARGE{Lucas de Jesus Matias}
+- \LARGE{Luiz Cesar Costa Raymundo}
 output:
+  pdf_document:
+    toc_depth: 2
   word_document: default
-  pdf_document: default
 ---
 
-Objetivo:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+\newpage
+\tableofcontents
+\newpage
+
+# Objetivo:
 
 Análise do salário inicial de recem formados em MBA
 
-#1. Leitura dos dados
+# 1. Leitura dos dados
 
 ```{r}
 read.csv2("./dados/mba.csv", stringsAsFactors = FALSE) -> mba
@@ -18,7 +32,7 @@ str(mba)
 
 ```
 
-#2. Analise do Salários e limpeza do banco
+# 2. Analise do Salários e limpeza do banco
 
 
 ```{r}
@@ -50,7 +64,7 @@ boxplot(responderam$salary ~ responderam$sex)
 
 
 
-#3. Retirada do Outlier
+# 3. Retirada do Outlier
 ```{r}
 
 responderamsoutlier<- responderam[which (responderam$salary < 200000)  , ]
