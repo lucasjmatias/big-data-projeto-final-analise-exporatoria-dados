@@ -332,7 +332,8 @@ analiseCartao <- dadosLoan %>%
   mutate(perc =  count/sum(count))
 
 
-ggplot(analiseCartao, aes(x = factor(card_type), y = perc*100, fill = factor(problemas_loan))) +
+ggplot(analiseCartao, 
+        aes(x = factor(card_type), y = perc*100, fill = factor(problemas_loan))) +
   geom_bar(stat="identity", width = 0.7) +
   labs(x = "Tipo de cartão", y = "Porcentagem", fill = "Problema com pagamento") +
   theme_minimal(base_size = 14) +
@@ -352,7 +353,8 @@ distritoAnalise <- dadosLoan %>%
                    mutate(perc =  count/sum(count))
 
 
-ggplot(distritoAnalise, aes(x = factor(region), y = perc*100, fill = factor(problemas_loan))) +
+ggplot(distritoAnalise, 
+          aes(x = factor(region), y = perc*100, fill = factor(problemas_loan))) +
   geom_bar(stat="identity", width = 0.7) +
   labs(x = "Região", y = "Porcentagem", fill = "Problema com pagamento") +
   theme_minimal(base_size = 14) +
