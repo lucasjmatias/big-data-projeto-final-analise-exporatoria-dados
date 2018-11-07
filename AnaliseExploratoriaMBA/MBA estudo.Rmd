@@ -1,7 +1,7 @@
 ---
 title: \Huge{Exploração de dados - MBA}
 author:
-- \LARGE{Bruno}
+- \LARGE{Bruno Santos Wance de Souza}
 - \LARGE{Lucas de Jesus Matias}
 - \LARGE{Luiz Cesar Costa Raymundo}
 output:

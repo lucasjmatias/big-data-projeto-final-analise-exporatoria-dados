@@ -1,7 +1,7 @@
 ---
 title: \Huge{Exploração de dados - Banco Czech}
 author:
-- \LARGE{Bruno}
+- \LARGE{Bruno Santos Wance de Souza}
 - \LARGE{Lucas de Jesus Matias}
 - \LARGE{Luiz Cesar Costa Raymundo}
 output:
@@ -10,8 +10,6 @@ output:
   word_document:
     toc_depth: '2'
 ---
-
-
 
 
 ```{r setup, include=FALSE}
@@ -70,9 +68,9 @@ read.csv2("./dados/order.asc", stringsAsFactors = FALSE) -> order
 
 ## Cliente
 O tratamento inicial da relação cliente envolve a separação do campo data de nascimento e gênero, que será tratado por M e F. E a transformação do campo birth_number em uma data válida para o R. Para isso transformamos o birth_number em um campo númerico, obtemos 4 dígitos da 3ª à 4ª posição, sendo este valor superior a 50 consideramos como feminino, pois o mês de nascimento das mulheres está com uma soma de 50 unidades. Subtraímos 5000 do mês das mulheres, pois como um único campo numérico, implica em diminuir 50 do campo mensal. Após isso concatenamos o número 19 ao começo do birth_number, no intuito de deixar melhor preparado para a formatação da data, que ocorre logo em seguida. Logo após, calculamos a idade e selecionamos apenas os campos que nos serão úteis para o nosso estudo.
-Utilizamos a data de referência como 01/01/1998, devido a referência dos dados, para calcular a idade dos clientes.
+Utilizamos a data de referência como 31/12/1998, devido a referência dos dados, para calcular a idade dos clientes.
 ```{r}
-currentdate <- as.Date("1998/01/01", format="%Y/%m/%d")
+currentdate <- as.Date("1998/12/31", format="%Y/%m/%d")
 client <- client %>%
   mutate(mesajustado = as.numeric(stringr::str_sub(birth_number,3,4))) %>%
   mutate(gender = ifelse(mesajustado > 50, "F", "M")) %>%
@@ -276,8 +274,9 @@ dadosLoan <- dados %>%
              dplyr::filter(loan_status != "nenhum") %>%
              mutate(problemas_loan = 
                       if_else(loan_status == "em debito" | loan_status == "nao pago",
-                    TRUE, FALSE))
-dadosLoan$problemas_loan = as.factor(dadosLoan$problemas_loan)
+                    1, 0)) %>%
+             mutate(ja_pagou_seguro = ifelse(ja_pagou_seguro == TRUE, 1, 0))
+
 
 ```
 
@@ -390,11 +389,21 @@ dadosLoanCluster <- dadosLoan %>%
                       select( problemas_loan, ja_pagou_seguro, no_account_users,
                               fq_saldo, media_transf, quant_ordem, min_saldo)
 
-dadosLoanCluster$problemas_loan = as.double(dadosLoan$problemas_loan)
-dadosLoanCluster$ja_pagou_seguro = as.double(dadosLoan$ja_pagou_seguro)
-
 lm(formula = problemas_loan ~ ., data = dadosLoanCluster) -> modelo
 summary(modelo)
+```
+
+
+## Regressão logística
+Ao montar o modelo logístico podemos observer uma relação logística bem forte entre o saldo mínimo em conta e problemas com dívidas.
+
+```{r}
+dadosLoan$min_saldo <- as.vector(dadosLoan$min_saldo)
+mylogit <- glm(problemas_loan ~ min_saldo, data = dadosLoan, family = "binomial")
+newdat <- data.frame(min_saldo=seq(min(dadosLoan$min_saldo), max(dadosLoan$min_saldo),len=682))
+newdat$problemas_loan = predict(mylogit, newdata=newdat, type="response")
+plot(problemas_loan~min_saldo, data=dadosLoan, col="red4")
+lines(problemas_loan ~ min_saldo, newdat, col="green4", lwd=2)
 ```
 
 
